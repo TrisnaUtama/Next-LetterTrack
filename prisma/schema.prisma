@@ -1,0 +1,94 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// define enum in prisma //
+enum Status {
+  ACTIVE
+  UNACTIVE
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+// making model using prisma  
+model Employee_Type {
+  employee_type_id Int        @id @default(autoincrement())
+  employee_type    String
+  Employee         Employee[]
+}
+
+model Letter_Type {
+  letter_type_id Int      @id @default(autoincrement())
+  letter_type    String
+  Letter         Letter[]
+}
+
+model Department {
+  department_id   Int         @id @default(autoincrement())
+  department_name String      @unique
+  department_head String
+  Employee        Employee[]
+  Signature       Signature[]
+}
+
+model Signature {
+  //foreign Key many to many realtions
+  letter        Letter     @relation(fields: [letter_id], references: [letter_id])
+  department    Department @relation(fields: [department_id], references: [department_id])
+  letter_id     String
+  department_id Int
+  isSigned      Boolean?
+  signed_date   DateTime?
+  descriptions  String?
+
+  @@id([letter_id, department_id])
+}
+
+model Letter {
+  letter_id    String   @id @default(cuid())
+  letter_date  DateTime
+  sender       String
+  descriptions String?
+  subject      String
+  content      String?
+  recipient    String?
+
+  // foreign key
+  letter_type    Letter_Type @relation(fields: [letter_type_id], references: [letter_type_id])
+  letter_type_id Int
+  Signature      Signature[]
+}
+
+model Employee {
+  employee_id   String    @id @default(cuid())
+  employee_name String?
+  password      String
+  birth         DateTime?
+  gender        Gender
+  phone_number  String?
+  email         String    @unique
+  address       String?
+  status        Status
+  createdAt     DateTime  @default(now()) @map(name: "created_at")
+  updatedAt     DateTime? @updatedAt @map(name: "updated_at")
+
+  // foreign key
+  department       Department    @relation(fields: [department_id], references: [department_id])
+  employee_type    Employee_Type @relation(fields: [employee_type_id], references: [employee_type_id])
+  department_id    Int
+  employee_type_id Int
+}
