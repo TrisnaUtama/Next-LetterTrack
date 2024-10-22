@@ -11,7 +11,7 @@ export default function DashboardLayoutServer({
   const employeeTypeId = user
     ? JSON.parse(user.value).data.employee_type_id
     : null;
-  const employeeId = JSON.parse(user!.value).data.employee_id;
+  const employeeId = user ? JSON.parse(user!.value).data.employee_id : null;
 
   return (
     <DashboardLayoutClient

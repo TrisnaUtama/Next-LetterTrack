@@ -2,6 +2,7 @@ import {
   faHome,
   faUser,
   faPlaneDeparture,
+  faEnvelope,
 } from "@fortawesome/free-solid-svg-icons";
 
 export type Route = {
@@ -20,6 +21,11 @@ export const getRoutes = (employeeTypeId: number | null): Route[] => {
           pathname: "/superadmin/departments",
           icon: faPlaneDeparture,
           menu: "Departments",
+        },
+        {
+          pathname: "/superadmin/letter",
+          icon: faEnvelope,
+          menu: "Letter",
         },
       ];
     case 2:

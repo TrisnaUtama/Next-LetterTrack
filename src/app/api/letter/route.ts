@@ -2,24 +2,58 @@ import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
+  const { searchParams } = request.nextUrl;
+
+  const departmentId = searchParams.get("departmentId");
+  if (!departmentId || isNaN(Number(departmentId))) {
+    return NextResponse.json(
+      { message: "Invalid department ID" },
+      { status: 400 }
+    );
+  }
+
   try {
-    const { searchParams } = new URL(request.url);
-    const department_id = searchParams.get("department_id");
-
-    if (!department_id) {
-      return NextResponse.json(
-        {
-          message: "department_id is required",
-        },
-        { status: 400 } 
-      );
-    }
-
     const data = await prisma.signature.findMany({
+      select: {
+        letter_id: true,
+        isSigned: true,
+        descriptions: true,
+        signed_date: true,
+        letter: {
+          select: {
+            content: true,
+            descriptions: true,
+            letter_date: true,
+            recipient: true,
+            sender: true,
+            subject: true,
+            letter_type: {
+              select: {
+                letter_type: true,
+              },
+            },
+          },
+        },
+        department: {
+          select: {
+            department_name: true,
+          },
+        },
+      },
       where: {
-        department_id: Number(department_id),
+        department_id: Number(departmentId),
       },
     });
+
+    if (!data || data.length === 0) {
+      return NextResponse.json(
+        {
+          message: "unsuccessfully retrieved letter data",
+          data: data,
+        },
+        { status: 404 }
+      );
+    }
 
     return NextResponse.json(
       {
@@ -29,10 +63,11 @@ export async function GET(request: NextRequest) {
       { status: 200 }
     );
   } catch (error: any) {
-    console.error("Error During Fetching data : ", error.message);
+    console.error("Error During Fetching data: ", error.message);
     return NextResponse.json(
       {
-        message: error.message || "an error occured while processing request",
+        message:
+          error.message || "an error occurred while processing the request",
       },
       {
         status: 500,
@@ -52,6 +87,7 @@ export async function POST(request: NextRequest) {
     letter_type,
     department_id,
   } = await request.json();
+
   try {
     const letter = await prisma.letter.create({
       data: {
@@ -74,19 +110,22 @@ export async function POST(request: NextRequest) {
         },
       },
     });
-    if (letter)
+
+    if (letter) {
       return NextResponse.json(
         {
-          message: "successfuly create new letter",
+          message: "Successfully created new letter",
           data: letter,
         },
         { status: 200 }
       );
+    }
   } catch (error: any) {
-    console.error("Error During Fetching data : ", error.message);
+    console.error("Error During Creating letter: ", error.message);
     return NextResponse.json(
       {
-        message: error.message || "an error occured while processing request",
+        message:
+          error.message || "An error occurred while processing the request",
       },
       {
         status: 500,
@@ -94,3 +133,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+

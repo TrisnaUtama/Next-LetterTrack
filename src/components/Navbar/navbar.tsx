@@ -38,7 +38,7 @@ export default function Navbar({
 }: {
   toogler: () => void;
   isOpen: boolean;
-  employeeId: string;
+  employeeId: string ;
 }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [employeeName, setEmployeeName] = useState("");

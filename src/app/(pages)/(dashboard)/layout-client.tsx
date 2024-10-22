@@ -10,7 +10,7 @@ export default function DashboardLayoutClient({
 }: {
   children: React.ReactNode;
   employeeTypeId: number | null;
-  employeeId: string | null;
+  employeeId: string;
 }) {
   const [handlerSidebar, setHandler] = useState(false);
   const toggleSidebar = () => {

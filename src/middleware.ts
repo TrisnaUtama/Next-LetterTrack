@@ -16,36 +16,36 @@ export function middleware(request: NextRequest) {
     switch (userId) {
       case 1:
         if (
-          request.nextUrl.pathname.startsWith("/secretary") ||
-          request.nextUrl.pathname.startsWith("/receptionist") ||
-          request.nextUrl.pathname.startsWith("/division")
+          path.startsWith("/secretary") ||
+          path.startsWith("/receptionist") ||
+          path.startsWith("/division")
         ) {
           return NextResponse.redirect(new URL("/superadmin/", request.url));
         }
         break;
       case 2:
         if (
-          request.nextUrl.pathname.startsWith("/superadmin") ||
-          request.nextUrl.pathname.startsWith("/receptionist") ||
-          request.nextUrl.pathname.startsWith("/division")
+          path.startsWith("/superadmin") ||
+          path.startsWith("/receptionist") ||
+          path.startsWith("/division")
         ) {
           return NextResponse.redirect(new URL("/secretary/", request.url));
         }
         break;
       case 3:
         if (
-          request.nextUrl.pathname.startsWith("/superadmin") ||
-          request.nextUrl.pathname.startsWith("/secretary") ||
-          request.nextUrl.pathname.startsWith("/division")
+          path.startsWith("/superadmin") ||
+          path.startsWith("/secretary") ||
+          path.startsWith("/division")
         ) {
           return NextResponse.redirect(new URL("/receptionist/", request.url));
         }
         break;
       case 4:
         if (
-          request.nextUrl.pathname.startsWith("/superadmin") ||
-          request.nextUrl.pathname.startsWith("/receptionist") ||
-          request.nextUrl.pathname.startsWith("/secretary")
+          path.startsWith("/superadmin") ||
+          path.startsWith("/receptionist") ||
+          path.startsWith("/secretary")
         ) {
           return NextResponse.redirect(new URL("/division/", request.url));
         }
@@ -60,5 +60,10 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/superadmin/:path*", "/secretary/:path*", "/receptionist/:path*"],
+  matcher: [
+    "/superadmin/:path*",
+    "/secretary/:path*",
+    "/receptionist/:path*",
+    "/division/:path*",
+  ],
 };

@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 
-export type Employee = {
+export interface Employee {
   employee_id: string;
   employee_name: string;
   gender: string;
@@ -13,7 +13,7 @@ export type Employee = {
   address: string;
   department_id: number;
   employee_type_id: number;
-};
+}
 
 export type FetchEmployeesResult =
   | { success: true; data: Employee[] }
@@ -53,7 +53,7 @@ export async function getAllEmployees(): Promise<FetchEmployeesResult> {
 }
 
 export async function updateAction(
-  employee_id: string,
+  employee_id: string | null,
   data: Employee
 ): Promise<FetchEmployeesResult> {
   const token = tokenParsed.token;
