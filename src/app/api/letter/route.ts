@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
             recipient: true,
             sender: true,
             subject: true,
+            status: true,
             letter_type: {
               select: {
                 letter_type: true,
@@ -133,4 +134,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

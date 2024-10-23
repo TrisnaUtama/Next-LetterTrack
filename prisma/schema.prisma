@@ -24,6 +24,11 @@ enum Gender {
   FEMALE
 }
 
+enum Letter_Status {
+  ON_PROGRESS
+  FINISH
+}
+
 // making model using prisma  
 model Employee_Type {
   employee_type_id Int        @id @default(autoincrement())
@@ -59,13 +64,14 @@ model Signature {
 }
 
 model Letter {
-  letter_id    String   @id @default(cuid())
+  letter_id    String        @id @default(cuid())
   letter_date  DateTime
   sender       String
   descriptions String?
   subject      String
   content      String?
   recipient    String?
+  status       Letter_Status @default(ON_PROGRESS)
 
   // foreign key
   letter_type    Letter_Type @relation(fields: [letter_type_id], references: [letter_type_id])

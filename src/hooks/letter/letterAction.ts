@@ -17,6 +17,7 @@ export interface Letter {
     recipient: string;
     sender: string;
     subject: string;
+    status: string;
     letter_type: {
       letter_type: string;
     };
@@ -51,9 +52,10 @@ export async function getLetter() {
       }
     );
 
-    // if (!res.ok) {
-    //   throw new Error(`HTTP error! status: ${res.status}`);
-    // }
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.message || `HTTP error! status: ${res.status}`);
+    }
 
     const responseData = await res.json();
     return {

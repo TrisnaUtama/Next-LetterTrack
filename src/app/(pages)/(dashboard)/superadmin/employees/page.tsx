@@ -35,7 +35,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { CaretSortIcon, DotsHorizontalIcon } from "@radix-ui/react-icons";
-import { LoaderIcon } from "lucide-react";
+import { LoaderIcon, User, XCircle } from "lucide-react";
 import {
   getAllEmployees,
   deleteEmployee,
@@ -53,6 +53,8 @@ export type Type = 1 | 2 | 3 | 4;
 export default function EnhancedDataTable() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
   const statusColor: Record<EmployeeStatus, string> = {
     ACTIVE: "bg-green-500 text-white",
     UNACTIVE: "bg-red-500 text-white",
@@ -79,11 +81,16 @@ export default function EnhancedDataTable() {
   useEffect(() => {
     const fetchData = async () => {
       const response: FetchEmployeesResult = await getAllEmployees();
-      if (response.success) {
-        setEmployees(response.data);
-      } else {
-        console.error("Failed to fetch employees:", response.message);
+      try {
+        if (response.success) {
+          setEmployees(response.data);
+        } else {
+          console.error("Failed to fetch employees:", response.message);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
       }
+      setIsLoading(false);
     };
     fetchData();
   }, []);
@@ -141,10 +148,12 @@ export default function EnhancedDataTable() {
         const status = row.getValue("status") as EmployeeStatus;
         const colorClass = statusColor[status] || "";
         return (
-          <Badge
-            className={`text-center font-bold ${colorClass} rounded hover:bg-green-600`}>
-            {status}
-          </Badge>
+          <div className="flex justify-center items-center">
+            <Badge
+              className={`font-bold ${colorClass} rounded hover:bg-green-600`}>
+              {status}
+            </Badge>
+          </div>
         );
       },
     },
@@ -284,6 +293,7 @@ export default function EnhancedDataTable() {
 
   return (
     <div className="space-y-4 p-5">
+      {/* top section*/}
       <div className="flex items-center justify-between">
         <Input
           placeholder="Filter employee names..."
@@ -360,7 +370,7 @@ export default function EnhancedDataTable() {
           </select>
         </div>
       </div>
-
+      {/* table section*/}
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -380,11 +390,26 @@ export default function EnhancedDataTable() {
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows.length ? (
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-96">
+                  <div className="flex flex-col items-center justify-center space-y-4">
+                    <div className="relative">
+                      <User className="h-12 w-12 text-gray-300 animate-pulse" />
+                      <LoaderIcon className="h-6 w-6 text-blue-500 animate-spin absolute -top-1 -right-1" />
+                    </div>
+                    <p className="text-gray-500 text-sm">
+                      Loading employees...
+                    </p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  data-state={row.getIsSelected() && "selected"}>
+                  data-state={row.getIsSelected() && "selected"}
+                  className="hover:bg-gray-50 transition-colors duration-200">
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
@@ -397,10 +422,18 @@ export default function EnhancedDataTable() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24">
-                  <div className="flex justify-center items-center">
-                    <LoaderIcon className="h-4 w-4 animate-spin" />
-                    <p className="m-2">Loading...</p>
+                <TableCell colSpan={columns.length} className="h-96">
+                  <div className="flex flex-col items-center justify-center space-y-4">
+                    <div className="relative">
+                      <User className="h-12 w-12 text-gray-300 " />
+                      <XCircle className="h-6 w-6 text-gray-400 absolute -top-1 -right-1" />
+                    </div>
+                    <p className="text-gray-500 text-sm">No employees found</p>
+                    {searchTerm && (
+                      <p className="text-gray-400 text-xs">
+                        Try adjusting your search terms
+                      </p>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>
@@ -409,39 +442,39 @@ export default function EnhancedDataTable() {
         </Table>
       </div>
 
-      <div className="flex items-center justify-between space-x-2 py-4">
-        <div className="flex-1 text-sm text-gray-700">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
+      {/* footer section*/}
+      <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm">
+        <div className="flex items-center space-x-2">
+          <span className="text-sm text-gray-700">
+            {table.getFilteredSelectedRowModel().rows.length} of{" "}
+            {table.getFilteredRowModel().rows.length} letter(s) selected
+          </span>
         </div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              setPagination((prev) => ({
-                ...prev,
-                pageIndex: Math.max(prev.pageIndex - 1, 0),
-              }))
-            }
-            disabled={!table.getCanPreviousPage()}>
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              setPagination((prev) => ({
-                ...prev,
-                pageIndex: Math.min(
-                  prev.pageIndex + 1,
-                  table.getPageCount() - 1
-                ),
-              }))
-            }
-            disabled={!table.getCanNextPage()}>
-            Next
-          </Button>
+
+        <div className="flex items-center space-x-2">
+          <div className="text-sm text-gray-500">
+            Page {table.getState().pagination.pageIndex + 1} of{" "}
+            {table.getPageCount()}
+          </div>
+
+          <div className="space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              className="hover:bg-gray-100 transition-colors duration-200">
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              className="hover:bg-gray-100 transition-colors duration-200">
+              Next
+            </Button>
+          </div>
         </div>
       </div>
     </div>
