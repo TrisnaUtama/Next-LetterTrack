@@ -25,14 +25,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
@@ -60,9 +52,8 @@ import {
   CheckCircle2,
   XCircle,
 } from "lucide-react";
-import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
-import Letter_png from "@/../public/mail.png";
+import LetterDetailDialog from "@/components/LetterDetailDialog/Dialog";
 
 import { getLetter, Letter } from "@/hooks/letter/letterAction";
 
@@ -230,7 +221,7 @@ export default function EnhancedDataTable() {
       ),
       cell: ({ row }) => (
         <div className="text-center">
-          {row.getValue("isSigned") ? (
+          {row.original.isSigned ? (
             <Badge className="text-center font-bold bg-green-500 hover:bg-green-600 transition-colors duration-200">
               <CheckCircle2 className="w-3 h-3 mr-1" />
               Signed
@@ -269,11 +260,6 @@ export default function EnhancedDataTable() {
             setIsSigningInProgress(false);
             setAlertSignOpen(false);
           }
-        };
-
-        const closeDialog = () => {
-          setDetailLetterOpen(false);
-          window.location.reload();
         };
 
         return (
@@ -316,22 +302,8 @@ export default function EnhancedDataTable() {
                 Detail Letter
               </DropdownMenuItem>
             </DropdownMenuContent>
-
-            {/* Dialog Detail Letter*/}
-            <Dialog open={detailLetterOpen} onOpenChange={closeDialog}>
-              <DialogContent className="w-screen">
-                <DialogHeader>
-                  <div className="grid grid-cols-2">
-                    <Image src={Letter_png} alt="Mail.png" />
-                    <div className="items-center justify-center grid grid-rows-2">
-                      <DialogTitle>Detail Letter</DialogTitle>
-                      <p>{row.original.letter.subject}</p>
-                    </div>
-                  </div>
-                </DialogHeader>
-              </DialogContent>
-            </Dialog>
-
+            {/* Dialog Detail Letter */}
+            {detailLetterOpen && <LetterDetailDialog letter={letter} />}
             {/* Alert Dialog Confirmation Sign Letter*/}
             <AlertDialog open={alertSignOpen} onOpenChange={setAlertSignOpen}>
               <AlertDialogContent className="max-w-md">
