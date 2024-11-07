@@ -46,6 +46,15 @@ export const getRoutes = (employeeTypeId: number | null): Route[] => {
           menu: "Letter",
         },
       ];
+    case 4:
+      return [
+        { pathname: "/division", icon: faHome, menu: "Home" },
+        {
+          pathname: "/letter",
+          icon: faEnvelope,
+          menu: "Letter",
+        },
+      ];
     default:
       return [];
   }

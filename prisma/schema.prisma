@@ -27,6 +27,13 @@ enum Gender {
 enum Letter_Status {
   ON_PROGRESS
   FINISH
+  HIDE
+}
+
+enum Signature_Status {
+  NOT_ARRIVE
+  ARRIVE
+  SIGNED
 }
 
 // making model using prisma  
@@ -52,26 +59,23 @@ model Department {
 
 model Signature {
   //foreign Key many to many realtions
-  letter        Letter     @relation(fields: [letter_id], references: [letter_id])
-  department    Department @relation(fields: [department_id], references: [department_id])
+  signature_id  Int              @id @default(autoincrement())
+  letter        Letter           @relation(fields: [letter_id], references: [letter_id])
+  department    Department       @relation(fields: [department_id], references: [department_id])
   letter_id     String
   department_id Int
-  isSigned      Boolean?
+  status        Signature_Status @default(NOT_ARRIVE)
   signed_date   DateTime?
   descriptions  String?
-
-  @@id([letter_id, department_id])
 }
 
 model Letter {
-  letter_id    String        @id @default(cuid())
-  letter_date  DateTime
-  sender       String
-  descriptions String?
-  subject      String
-  content      String?
-  recipient    String?
-  status       Letter_Status @default(ON_PROGRESS)
+  letter_id   String        @id @default(cuid())
+  letter_date DateTime
+  sender      String
+  subject     String
+  recipient   String?
+  status      Letter_Status @default(ON_PROGRESS)
 
   // foreign key
   letter_type    Letter_Type @relation(fields: [letter_type_id], references: [letter_type_id])

@@ -124,7 +124,8 @@ export default function Page() {
       router.push("/superadmin/employees");
       toast({
         variant: "success",
-        title: "Success adding new Employee",
+        title: "Successfully ",
+        description: "New Employee successfully added ",
       });
     } else {
       console.error("Registration failed:", result.message);
@@ -365,7 +366,7 @@ export default function Page() {
                     type="button"
                     onClick={handleSubmit}
                     disabled={isSubmitting}>
-                    Continue
+                    {isSubmitting ? "Loading..." : "Continue"}
                   </Button>
                 </AlertDialogFooter>
               </AlertDialogContent>

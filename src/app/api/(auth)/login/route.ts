@@ -4,6 +4,36 @@ import validateUsername from "@/utils/usernameValidate";
 import bcrypt from "bcryptjs";
 import * as jose from "jose";
 
+export async function GET(request: NextRequest) {
+  const employee_id = request.nextUrl.searchParams.get("employee_id");
+  if (!employee_id) {
+    return NextResponse.json(
+      { message: "Employee ID is required." },
+      { status: 400 }
+    );
+  }
+  try {
+    const data = await prisma.employee.findUnique({
+      where: {
+        employee_id: employee_id,
+      },
+    });
+    return NextResponse.json(
+      {
+        message: "successfully retreived data user login",
+        data: data,
+      },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    console.error("Error during login:", error.message);
+    return NextResponse.json(
+      { message: "An error occurred while processing your request." },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: NextRequest) {
   const { username, password } = await request.json();
 
@@ -50,8 +80,8 @@ export async function POST(request: NextRequest) {
       .sign(secret);
 
     return NextResponse.json({ data: user, token: jwt }, { status: 200 });
-  } catch (error) {
-    console.error("Error during login:", error);
+  } catch (error: any) {
+    console.error("Error during login:", error.message);
     return NextResponse.json(
       { message: "An error occurred while processing your request." },
       { status: 500 }

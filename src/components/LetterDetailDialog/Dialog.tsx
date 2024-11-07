@@ -58,11 +58,15 @@ const LetterDetailDialog: React.FC<LetterDetailDialogProps> = ({ letter }) => {
 
   const formatDate = (dateString: string | null): string => {
     if (!dateString) return "Not available";
-    return new Date(dateString).toLocaleDateString("en-US", {
+    const formattedDate = new Date(dateString).toLocaleString("id-ID", {
       year: "numeric",
       month: "long",
       day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h24",
     });
+    return formattedDate.replace(/pukul\s*/, '').replace(',', ', ');
   };
 
   if (!letter) {
@@ -71,7 +75,7 @@ const LetterDetailDialog: React.FC<LetterDetailDialogProps> = ({ letter }) => {
 
   return (
     <Modal>
-      <div className="max-w-4xl max-h-[90vh] flex flex-col bg-gray-50 rounded-lg shadow-xl transition-all duration-300">
+      <div className="max-w-4xl max-h-[90vh] flex flex-col bg-gray-50">
         {/* Modal Header */}
         <div className="border-b-2 pb-4 p-4 bg-white rounded-t-lg shadow-sm">
           <div className="flex justify-between items-center">
@@ -112,18 +116,6 @@ const LetterDetailDialog: React.FC<LetterDetailDialogProps> = ({ letter }) => {
                     <p className="text-sm font-medium w-24">Subject:</p>
                     <p className="text-sm flex-1 text-gray-700">
                       {letter.letter.subject}
-                    </p>
-                  </div>
-                  <div className="flex items-start space-x-2">
-                    <p className="text-sm font-medium w-24">Description:</p>
-                    <p className="text-sm flex-1 text-gray-700">
-                      {letter.letter.descriptions}
-                    </p>
-                  </div>
-                  <div className="flex items-start space-x-2">
-                    <p className="text-sm font-medium w-24">Content:</p>
-                    <p className="text-sm flex-1 text-gray-700">
-                      {letter.letter.content}
                     </p>
                   </div>
                   <div className="flex items-start space-x-2">
@@ -195,31 +187,42 @@ const LetterDetailDialog: React.FC<LetterDetailDialogProps> = ({ letter }) => {
                           <Skeleton className="h-4 w-24" />
                         </div>
                       ))
-                    : signature?.map((sig, index) => (
-                        <div
-                          key={index}
-                          className="relative pl-8 border-l-2 border-gray-200">
-                          <div className="absolute -left-2 top-0">
-                            <CheckCircle2
-                              className={
-                                sig.isSigned
-                                  ? "text-green-500"
-                                  : "text-gray-300"
-                              }
-                              size={20}
-                            />
+                    : signature
+                        .sort((a, b) => {
+                          const order: { [key: string]: number } = {
+                            SIGNED: 1,
+                            ARRIVE: 2,
+                            NOT_ARRIVE: 3,
+                          };
+                          return order[a.status] - order[b.status];
+                        })
+                        .map((sig, index) => (
+                          <div
+                            key={index}
+                            className="relative pl-8 border-l-2 border-gray-200">
+                            <div className="absolute -left-2 top-0">
+                              <CheckCircle2
+                                className={
+                                  sig.status === "SIGNED"
+                                    ? "text-green-500"
+                                    : sig.status === "NOT_ARRIVE"
+                                    ? "text-gray-300"
+                                    : "text-blue-300"
+                                }
+                                size={20}
+                              />
+                            </div>
+                            <p className="text-sm font-medium text-gray-700">
+                              {sig.department.department_name}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {sig.descriptions}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {formatDate(sig.signed_date)}
+                            </p>
                           </div>
-                          <p className="text-sm font-medium text-gray-700">
-                            {sig.department.department_name}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {sig.descriptions}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {formatDate(sig.signed_date)}
-                          </p>
-                        </div>
-                      ))}
+                        ))}
                 </div>
               </div>
             </div>

@@ -15,14 +15,13 @@ export async function GET(request: NextRequest) {
   try {
     const data = await prisma.signature.findMany({
       select: {
+        signature_id: true,
         letter_id: true,
-        isSigned: true,
+        status: true,
         descriptions: true,
         signed_date: true,
         letter: {
           select: {
-            content: true,
-            descriptions: true,
             letter_date: true,
             recipient: true,
             sender: true,
@@ -38,6 +37,7 @@ export async function GET(request: NextRequest) {
         department: {
           select: {
             department_name: true,
+            department_id: true,
           },
         },
       },
@@ -81,12 +81,11 @@ export async function POST(request: NextRequest) {
   const {
     letter_id,
     sender,
-    descriptions,
     subject,
-    content,
     recipient,
     letter_type,
     department_id,
+    login_user_department_id,
   } = await request.json();
 
   try {
@@ -95,8 +94,6 @@ export async function POST(request: NextRequest) {
         letter_id: letter_id,
         sender: sender,
         subject: subject,
-        content: content,
-        descriptions: descriptions,
         recipient: recipient,
         letter_type_id: letter_type,
         letter_date: new Date(),
@@ -105,8 +102,7 @@ export async function POST(request: NextRequest) {
             department: {
               connect: { department_id: id },
             },
-            isSigned: false,
-            signed_date: null,
+            status: id == login_user_department_id ? "ARRIVE" : "NOT_ARRIVE",
           })),
         },
       },

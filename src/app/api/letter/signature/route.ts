@@ -13,12 +13,14 @@ export async function GET(request: NextRequest) {
   try {
     const data = await prisma.signature.findMany({
       select: {
+        signature_id: true,
         letter_id: true,
-        isSigned: true,
+        status: true,
         signed_date: true,
         descriptions: true,
         department: {
           select: {
+            department_id: true,
             department_name: true,
             department_head: true,
           },
@@ -51,6 +53,77 @@ export async function GET(request: NextRequest) {
       {
         message:
           error.message || "an error occurred while processing the request",
+      },
+      {
+        status: 500,
+      }
+    );
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  const { descriptions, signature_id, letter_id, department_id } =
+    await request.json();
+
+  if (!signature_id || !letter_id) {
+    return NextResponse.json(
+      { message: "Invalid signature ID or letter ID" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const dataUpdated = await prisma.signature.update({
+      where: {
+        signature_id: signature_id,
+      },
+      data: {
+        descriptions: descriptions,
+        signed_date: new Date(),
+        status: "SIGNED",
+      },
+    });
+
+    await prisma.signature.updateMany({
+      where: {
+        letter_id: letter_id,
+        department_id: department_id,
+      },
+      data: {
+        status: "ARRIVE",
+      },
+    });
+
+    const allSignatures = await prisma.signature.findMany({
+      where: { letter_id: letter_id },
+      select: { status: true },
+    });
+
+    const allAreSigned = allSignatures.every(
+      (signature) => signature.status === "SIGNED"
+    );
+
+    if (allAreSigned) {
+      await prisma.letter.update({
+        where: {
+          letter_id: letter_id,
+        },
+        data: {
+          status: "FINISH",
+        },
+      });
+    }
+
+    return NextResponse.json(
+      { message: "Update successful", dataUpdated },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    console.error("Error during update: ", error.message);
+    return NextResponse.json(
+      {
+        message:
+          error.message || "An error occurred while processing the request",
       },
       {
         status: 500,

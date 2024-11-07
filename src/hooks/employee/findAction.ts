@@ -41,7 +41,7 @@ export default async function findAction(
     );
 
     if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res}`);
+      throw new Error(`HTTP error! status: ${res.json()}`);
     }
 
     const responseData = await res.json();
@@ -50,7 +50,7 @@ export default async function findAction(
       data: responseData.data,
     };
   } catch (error: any) {
-    console.error("Error fetching employees:", error);
+    console.error("Error fetching employees:", error.message);
     return {
       success: false,
       message: error.message || "An error occurred while fetching employees",

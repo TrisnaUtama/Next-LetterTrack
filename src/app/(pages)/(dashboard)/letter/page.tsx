@@ -34,15 +34,6 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogCancel,
-} from "@/components/ui/alert-dialog";
 import { CaretSortIcon, DotsHorizontalIcon } from "@radix-ui/react-icons";
 import {
   LoaderIcon,
@@ -54,13 +45,17 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import LetterDetailDialog from "@/components/LetterDetailDialog/Dialog";
-
+import SignLetterDialog from "@/components/SignedLetterDialog";
 import { getLetter, Letter } from "@/hooks/letter/letterAction";
+import { Employee, userLogin } from "@/hooks/(auth)/login/loginAction";
 
 export default function EnhancedDataTable() {
   const [letter, setLetter] = useState<Letter[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [letterFiltered, setLetterFiltered] = useState<Letter[]>([]);
+  const [userDepartment, setUserDepartment] = useState();
+  const [employeeLogin, setEmployeeLogin] = useState<Employee>();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -69,6 +64,7 @@ export default function EnhancedDataTable() {
         const response = await getLetter();
         if (response.success) {
           setLetter(response.data);
+          setUserDepartment(response.data[0].department.department_id);
         } else {
           console.error("Failed to fetch letter:", response.message);
         }
@@ -80,9 +76,22 @@ export default function EnhancedDataTable() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      const filteredLetters = letter.filter(
+        (l) => l.letter.status !== "FINISH"
+      );
+      const fetchUser = await userLogin();
+      setEmployeeLogin(fetchUser.data);
+      setLetterFiltered(filteredLetters);
+    };
+    fetchData();
+  }, [letter]);
+
   const LetterStatusMapping = {
-    ON_PROGRESS: "ON PROGRESS",
+    ON_PROGRESS: "IN PROGRESS",
     FINISH: "DONE",
+    HIDE: "HIDE",
   };
 
   const columns: ColumnDef<Letter>[] = [
@@ -117,7 +126,7 @@ export default function EnhancedDataTable() {
       ),
       cell: ({ row }) => (
         <div className="text-center font-medium text-gray-700 hover:text-blue-600 transition-colors duration-200">
-          {row.getValue("letter_id")}
+          {row.original.letter_id}
         </div>
       ),
     },
@@ -174,21 +183,28 @@ export default function EnhancedDataTable() {
       header: () => (
         <div className="text-center font-semibold text-gray-700">Status</div>
       ),
-      cell: ({ row }) => (
-        <div className="text-center">
-          {row.original.letter.status === "ON_PROGRESS" ? (
-            <Badge className="text-center font-bold bg-amber-500 hover:bg-amber-600 transition-colors duration-200">
-              <LoaderIcon className="w-3 h-3 mr-1 animate-spin" />
-              {LetterStatusMapping.ON_PROGRESS}
-            </Badge>
-          ) : (
-            <Badge className="text-center font-bold bg-green-500 hover:bg-green-600 transition-colors duration-200">
-              <CheckCircle2 className="w-3 h-3 mr-1" />
-              {LetterStatusMapping.FINISH}
-            </Badge>
-          )}
-        </div>
-      ),
+      cell: ({ row }) => {
+        return (
+          <div className="text-center">
+            {row.original.letter.status === "ON_PROGRESS" ? (
+              <Badge className="text-center font-bold bg-amber-500 hover:bg-amber-600 transition-colors duration-200">
+                <LoaderIcon className="w-3 h-3 mr-1 animate-spin" />
+                {LetterStatusMapping.ON_PROGRESS}
+              </Badge>
+            ) : row.original.letter.status === "HIDE" ? (
+              <Badge className="text-center text-white font-bold bg-gray-500 hover:bg-gray-600 transition-colors duration-200">
+                <CheckCircle2 className="w-3 h-3 mr-1" />
+                {LetterStatusMapping.HIDE}
+              </Badge>
+            ) : (
+              <Badge className="text-center font-bold bg-green-500 hover:bg-green-600 transition-colors duration-200">
+                <CheckCircle2 className="w-3 h-3 mr-1" />
+                {LetterStatusMapping.FINISH}
+              </Badge>
+            )}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "From",
@@ -215,52 +231,53 @@ export default function EnhancedDataTable() {
       ),
     },
     {
-      accessorKey: "isSigned",
-      header: () => (
-        <div className="text-center font-semibold text-gray-700">Signed</div>
-      ),
-      cell: ({ row }) => (
-        <div className="text-center">
-          {row.original.isSigned ? (
-            <Badge className="text-center font-bold bg-green-500 hover:bg-green-600 transition-colors duration-200">
-              <CheckCircle2 className="w-3 h-3 mr-1" />
-              Signed
-            </Badge>
-          ) : (
-            <Badge className="text-center font-bold bg-red-500 hover:bg-red-600 transition-colors duration-200">
-              <XCircle className="w-3 h-3 mr-1" />
-              Not Signed
-            </Badge>
-          )}
+      accessorKey: "status_signed",
+      header: ({ column }) => (
+        <div className="flex justify-center items-center">
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="font-semibold text-gray-700 hover:bg-gray-100">
+            Sign Status
+            <CaretSortIcon className="ml-2 h-4 w-4" />
+          </Button>
         </div>
       ),
+      cell: ({ row }) => {
+        return (
+          <div className="text-center">
+            {row.original.status === "ARRIVE" ? (
+              <Badge className="text-center font-bold bg-blue-500 hover:bg-blue-600 transition-colors duration-200">
+                <CheckCircle2 className="w-3 h-3 mr-1" />
+                Arrive
+              </Badge>
+            ) : row.original.status === "NOT_ARRIVE" ? (
+              <Badge className="text-center font-bold bg-red-500 hover:bg-red-600 transition-colors duration-200">
+                <XCircle className="w-3 h-3 mr-1" />
+                Not Arrive
+              </Badge>
+            ) : (
+              <Badge className="text-center font-bold bg-green-500 hover:bg-green-600 transition-colors duration-200">
+                <XCircle className="w-3 h-3 mr-1" />
+                Signed
+              </Badge>
+            )}
+          </div>
+        );
+      },
+      sortingFn: (a, b) => {
+        const valueA = a.original.status;
+        const valueB = b.original.status;
+        return valueA.localeCompare(valueB);
+      },
     },
     {
       id: "actions",
       enableHiding: false,
       cell: ({ row }) => {
         const letter = row.original;
-        const [alertSignOpen, setAlertSignOpen] = useState(false);
-        const [isSigningInProgress, setIsSigningInProgress] = useState(false);
         const [detailLetterOpen, setDetailLetterOpen] = useState(false);
-
-        const handleCancel = () => {
-          setIsSigningInProgress(false);
-          window.location.reload();
-        };
-
-        const handleSign = async () => {
-          setIsSigningInProgress(true);
-          try {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            window.location.reload();
-          } catch (error) {
-            console.error("Error signing letter:", error);
-          } finally {
-            setIsSigningInProgress(false);
-            setAlertSignOpen(false);
-          }
-        };
+        const [isOpen, setIsOpen] = useState(false);
 
         return (
           <DropdownMenu>
@@ -282,7 +299,7 @@ export default function EnhancedDataTable() {
                   navigator.clipboard.writeText(letter.letter_id);
                   toast({
                     variant: "success",
-                    title: "Success",
+                    title: "Success Copying",
                     description: `successfuly copy letter id ${letter.letter_id}`,
                   });
                 }}>
@@ -290,10 +307,16 @@ export default function EnhancedDataTable() {
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
+                onClick={() => setIsOpen(true)}
                 className="flex justify-center cursor-pointer hover:bg-gray-100 transition-colors duration-200"
-                onSelect={() => setAlertSignOpen(true)}
-                disabled={letter.isSigned}>
-                {letter.isSigned ? "Already Signed" : "Sign Letter"}
+                disabled={
+                  letter.status == "SIGNED" || letter.status == "NOT_ARRIVE"
+                }>
+                {letter.status == "SIGNED"
+                  ? "Already Signed"
+                  : letter.status == "NOT_ARRIVE"
+                  ? "Wait The Letter"
+                  : "Sign Letter"}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -304,41 +327,17 @@ export default function EnhancedDataTable() {
             </DropdownMenuContent>
             {/* Dialog Detail Letter */}
             {detailLetterOpen && <LetterDetailDialog letter={letter} />}
-            {/* Alert Dialog Confirmation Sign Letter*/}
-            <AlertDialog open={alertSignOpen} onOpenChange={setAlertSignOpen}>
-              <AlertDialogContent className="max-w-md">
-                <AlertDialogHeader>
-                  <AlertDialogTitle className="text-xl font-semibold">
-                    Confirm Letter Signing
-                  </AlertDialogTitle>
-                  <AlertDialogDescription className="text-gray-600">
-                    This action cannot be undone. This will permanently sign the
-                    letter and update its status in the database.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter className="space-x-2">
-                  <AlertDialogCancel
-                    className="hover:bg-gray-100 transition-colors duration-200"
-                    disabled={isSigningInProgress}
-                    onClick={handleCancel}>
-                    Cancel
-                  </AlertDialogCancel>
-                  <Button
-                    onClick={handleSign}
-                    disabled={isSigningInProgress}
-                    className="bg-blue-600 hover:bg-blue-700 transition-colors duration-200">
-                    {isSigningInProgress ? (
-                      <>
-                        <LoaderIcon className="w-4 h-4 mr-2 animate-spin" />
-                        Signing...
-                      </>
-                    ) : (
-                      "Confirm Sign"
-                    )}
-                  </Button>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            {/* Dialog Sign Letter */}
+            {isOpen && (
+              <SignLetterDialog
+                letter_id={row.original.letter_id}
+                onClose={() => setIsOpen(false)}
+                signature_id={Number(row.original.signature_id)}
+                department_id_current={Number(
+                  row.original.department.department_id
+                )}
+              />
+            )}
           </DropdownMenu>
         );
       },
@@ -355,7 +354,7 @@ export default function EnhancedDataTable() {
   });
 
   const table = useReactTable({
-    data: letter,
+    data: searchTerm.length > 0 ? letter : letterFiltered,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -418,7 +417,7 @@ export default function EnhancedDataTable() {
             <div>
               <p className="text-sm text-gray-500">Signed</p>
               <p className="text-2xl font-semibold">
-                {letter.filter((l) => l.isSigned).length}
+                {letter.filter((l) => l.status == "SIGNED").length}
               </p>
             </div>
             <CheckCircle2 className="h-10 w-10 text-blue-500 transition-transform transform hover:scale-110" />
@@ -464,12 +463,14 @@ export default function EnhancedDataTable() {
             ))}
           </select>
 
-          <Link
-            href="/superadmin/register"
-            className="flex items-center px-4 py-2 rounded-md bg-gradient-to-r from-[#01557B] to-[#019BE1] hover:bg-gradient-to-r hover:from-[#01547be2] hover:to-[#019ae1dc] cursor-pointer text-white font-medium text-sm transition-colors duration-200">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Letter
-          </Link>
+          {employeeLogin?.employee_type_id != 4 && (
+            <Link
+              href={`/letter/${employeeLogin?.department_id}/add`}
+              className="flex items-center px-4 py-2 rounded-md bg-gradient-to-r from-[#01557B] to-[#019BE1] hover:bg-gradient-to-r hover:from-[#01547be2] hover:to-[#019ae1dc] cursor-pointer text-white font-medium text-sm transition-colors duration-200">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Letter
+            </Link>
+          )}
         </div>
       </div>
 
