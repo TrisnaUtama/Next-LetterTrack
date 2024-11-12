@@ -95,6 +95,13 @@ export default function AddLetter({ params }: { params: { id: number } }) {
     }));
   };
 
+  const handleSelectChangeDepartmentSender = (value: string) => {
+    setData((prevData) => ({
+      ...prevData,
+      sender: value,
+    }));
+  };
+
   const handleDepartmentChange = (selected: string[]) => {
     setData((prevData) => ({
       ...prevData,
@@ -200,16 +207,24 @@ export default function AddLetter({ params }: { params: { id: number } }) {
             </div>
             <div>
               <Label htmlFor="sender">Sender</Label>
-              <Input
-                type="text"
-                id="sender"
-                placeholder="enter the sender's name"
-                value={data.sender}
-                onChange={handleInputChange}
-                className={`mb-1 h-10 p-3 font-medium border ${
-                  errors.sender ? "border-red-500" : "border-gray-300"
-                } focus:border-blue-500 focus:outline-none`}
-              />
+              <Select onValueChange={handleSelectChangeDepartmentSender}>
+                <SelectTrigger
+                  className={`mt-[1px] h-10 border ${
+                    errors.sender ? "border-red-500" : "border-gray-300"
+                  } focus:border-blue-500 focus:outline-none`}>
+                  <SelectValue placeholder="Select Sender of the Letter" />
+                </SelectTrigger>
+                <SelectContent>
+                  {departments.map((value) => (
+                    <SelectItem
+                      disabled={value.value === params.id.toString()}
+                      key={value.value}
+                      value={value.label}>
+                      {value.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {errors.sender && (
                 <p className="text-red-500 text-sm">{errors.sender}</p>
               )}
