@@ -54,7 +54,6 @@ export default function EnhancedDataTable() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [letterFiltered, setLetterFiltered] = useState<Letter[]>([]);
-  const [userDepartment, setUserDepartment] = useState();
   const [employeeLogin, setEmployeeLogin] = useState<Employee>();
   const { toast } = useToast();
 
@@ -64,7 +63,6 @@ export default function EnhancedDataTable() {
         const response = await getLetter();
         if (response.success) {
           setLetter(response.data);
-          setUserDepartment(response.data[0].department.department_id);
         } else {
           console.error("Failed to fetch letter:", response.message);
         }
@@ -92,6 +90,12 @@ export default function EnhancedDataTable() {
     ON_PROGRESS: "IN PROGRESS",
     FINISH: "DONE",
     HIDE: "HIDE",
+  };
+
+  const SignatureStatus = {
+    NOT_ARRIVE: "NOT ARRIVE",
+    ARRIVE: "ARRIVE",
+    SIGNED: "SIGNED",
   };
 
   const columns: ColumnDef<Letter>[] = [
@@ -348,6 +352,7 @@ export default function EnhancedDataTable() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
+  const [letterStatus, setLetterStatus] = useState<string>("");
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 5,
@@ -447,6 +452,29 @@ export default function EnhancedDataTable() {
 
         <div className="flex items-center space-x-4">
           <select
+            value={letterStatus}
+            onChange={(e) => {
+              const status = e.target.value;
+              setLetterStatus(e.target.value);
+
+              if (status) {
+                const filteredLetters = letter.filter(
+                  (l) => l.status === status
+                );
+                setLetterFiltered(filteredLetters);
+              } else {
+                setLetterFiltered(letter);
+              }
+            }}
+            className="border border-gray-200 rounded-md text-gray-600 h-10 pl-3 pr-8 bg-white hover:border-gray-400 focus:outline-none transition-colors duration-200 text-sm">
+            <option value="">All Status</option>
+            {Object.entries(SignatureStatus).map(([key, value]) => (
+              <option value={key} key={key}>
+                {value}
+              </option>
+            ))}
+          </select>
+          <select
             value={pagination.pageSize}
             onChange={(e) => {
               setPagination((prev) => ({
@@ -455,7 +483,9 @@ export default function EnhancedDataTable() {
                 pageIndex: 0,
               }));
             }}
-            className="border border-gray-200 rounded-md text-gray-600 h-10 pl-3 pr-8 bg-white hover:border-gray-400 focus:outline-none transition-colors duration-200 text-sm">
+            className="border border-gray-200 rounded-md text-gray-600 
+            h-10 pl-3 pr-8 bg-white hover:border-gray-400 
+            focus:outline-none transition-colors duration-200 text-sm">
             {[5, 10, 20, 50].map((size) => (
               <option key={size} value={size}>
                 Show {size}
