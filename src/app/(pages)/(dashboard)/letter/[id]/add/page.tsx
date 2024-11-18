@@ -190,7 +190,7 @@ export default function AddLetter({ params }: { params: { id: number } }) {
           <p className="text-sm">Please provide all of the form needs.</p>
           <div className="grid grid-cols-3 mt-4 space-x-10">
             <div>
-              <Label htmlFor="letter_id">Letter Id</Label>
+              <Label htmlFor="letter_id">Letter Id <span className="text-red-500">*</span></Label>
               <Input
                 type="text"
                 id="letter_id"
@@ -206,7 +206,7 @@ export default function AddLetter({ params }: { params: { id: number } }) {
               )}
             </div>
             <div>
-              <Label htmlFor="sender">Sender</Label>
+              <Label htmlFor="sender">Sender <span className="text-red-500">*</span></Label>
               <Select onValueChange={handleSelectChangeDepartmentSender}>
                 <SelectTrigger
                   className={`mt-[1px] h-10 border ${
@@ -230,7 +230,7 @@ export default function AddLetter({ params }: { params: { id: number } }) {
               )}
             </div>
             <div>
-              <Label htmlFor="recipient">Recipient</Label>
+              <Label htmlFor="recipient">Recipient <span className="text-red-500">*</span></Label>
               <Input
                 type="text"
                 id="recipient"
@@ -248,7 +248,7 @@ export default function AddLetter({ params }: { params: { id: number } }) {
           </div>
           <div className="grid grid-cols-2 mt-4 space-x-10">
             <div>
-              <Label htmlFor="letter_type">Letter Type</Label>
+              <Label htmlFor="letter_type">Letter Type <span className="text-red-500">*</span></Label>
               <Select onValueChange={handleSelectChange}>
                 <SelectTrigger
                   className={`mt-[6px] h-10 border ${
@@ -269,7 +269,7 @@ export default function AddLetter({ params }: { params: { id: number } }) {
               )}
             </div>
             <div className="mt-0.5">
-              <Label htmlFor="department_id">Department</Label>
+              <Label htmlFor="department_id">Department <span className="text-red-500">*</span></Label>
               <MultiSelect
                 className={`mt-1 h-10 border ${
                   errors.department_id ? "border-red-500" : "border-gray-300"
@@ -289,7 +289,7 @@ export default function AddLetter({ params }: { params: { id: number } }) {
           </div>
           <div className="grid mt-4 space-x-10">
             <div>
-              <Label htmlFor="subject">Subject</Label>
+              <Label htmlFor="subject">Subject <span className="text-red-500">*</span></Label>
               <Textarea
                 id="subject"
                 placeholder="enter the letter Subject"

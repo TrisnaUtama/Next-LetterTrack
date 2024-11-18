@@ -160,7 +160,7 @@ export default function Page() {
           </p>
           <div className="grid grid-cols-3 mt-4 space-x-10">
             <div>
-              <Label htmlFor="employee_name">Employee Name</Label>
+              <Label htmlFor="employee_name">Employee Name <span className="text-red-500">*</span></Label>
               <Input
                 value={employeeName}
                 onChange={(e) => setEmployeeName(e.target.value)}
@@ -176,7 +176,7 @@ export default function Page() {
               )}
             </div>
             <div>
-              <Label htmlFor="birth">Date of Birth</Label>
+              <Label htmlFor="birth">Date of Birth <span className="text-red-500">*</span></Label>
               <Input
                 type="date"
                 id="birth"
@@ -191,7 +191,7 @@ export default function Page() {
               )}
             </div>
             <div>
-              <Label htmlFor="employee_gender">Gender</Label>
+              <Label htmlFor="employee_gender">Gender <span className="text-red-500">*</span></Label>
               <Select value={gender} onValueChange={setGender}>
                 <SelectTrigger
                   className={`h-10 border ${
@@ -211,7 +211,7 @@ export default function Page() {
           </div>
           <div className="grid grid-cols-2">
             <div className="relative">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Password <span className="text-red-500">*</span></Label>
               <div className="flex items-center">
                 <Input
                   type={showPassword ? "text" : "password"}
@@ -244,7 +244,7 @@ export default function Page() {
           </p>
           <div className="grid grid-cols-3 mt-4 space-x-10">
             <div>
-              <Label htmlFor="address">Address</Label>
+              <Label htmlFor="address">Address <span className="text-red-500">*</span></Label>
               <Input
                 value={addressEmployee}
                 onChange={(e) => setAddressEmployee(e.target.value)}
@@ -260,7 +260,7 @@ export default function Page() {
               )}
             </div>
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
               <Input
                 value={emailEmployee}
                 onChange={(e) => setEmailEmployee(e.target.value)}
@@ -276,7 +276,7 @@ export default function Page() {
               )}
             </div>
             <div>
-              <Label htmlFor="phonenumber">Phone Number</Label>
+              <Label htmlFor="phonenumber">Phone Number <span className="text-red-500">*</span></Label>
               <Input
                 value={phoneNumberEmployee}
                 onChange={(e) => setPhoneNumberEmployee(e.target.value)}
@@ -294,7 +294,7 @@ export default function Page() {
           </div>
           <div className="grid grid-cols-2 space-x-5 mt-3">
             <div>
-              <Label htmlFor="department">Department</Label>
+              <Label htmlFor="department">Department <span className="text-red-500">*</span></Label>
               <Select
                 value={selectedDepartment?.toString() || ""}
                 onValueChange={(value) => setSelectedDepartment(Number(value))}>
@@ -319,7 +319,7 @@ export default function Page() {
               )}
             </div>
             <div>
-              <Label htmlFor="employee_type">Employee Type</Label>
+              <Label htmlFor="employee_type">Employee Type <span className="text-red-500">*</span></Label>
               <Select value={employeeType} onValueChange={setEmployeeType}>
                 <SelectTrigger
                   className={`mt-[6px] h-10 border ${
