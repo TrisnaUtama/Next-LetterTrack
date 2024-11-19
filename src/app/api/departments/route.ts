@@ -124,18 +124,6 @@ export async function PATCH(request: NextRequest) {
         }
       );
     const departments = await prisma.department.findMany();
-    const departmentExists = departments.some(
-      (department) => department.department_name === department_name
-    );
-    if (departmentExists)
-      return NextResponse.json(
-        {
-          message: "department name already exits",
-        },
-        {
-          status: 409,
-        }
-      );
 
     const updatedDepartments = await prisma.department.update({
       where: { department_id },

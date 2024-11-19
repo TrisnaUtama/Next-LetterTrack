@@ -69,8 +69,8 @@ export default function AddDepartmentDialog({
     } else {
       toast({
         variant: "success",
-        title: "Letter Added",
-        description: "The letter was successfully added.",
+        title: "Department Added",
+        description: "The Department was successfully added.",
       });
       setDepartment({
         department_head: "",
@@ -87,9 +87,9 @@ export default function AddDepartmentDialog({
   return (
     <Modal>
       <div>
-        <div className="max-w-5xl max-h-[90vh] flex flex-col bg-gray-50 mb-4">
+        <div className="max-w-5xl max-h-[90vh] flex flex-col mb-4">
           {/* Header Modal */}
-          <h2 className="font-bold">Add Department</h2>
+          <h2 className="font-bold text-xl">Add Department</h2>
           <p className="text-slate-500 text-[12px] mb-2">
             Easyly adding a new Department in your Website
           </p>

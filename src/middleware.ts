@@ -11,8 +11,6 @@ export function middleware(request: NextRequest) {
     const userId = dataUser.data.employee_type_id;
     const path = request.nextUrl.pathname;
 
-    console.log(userId);
-
     switch (userId) {
       case 1:
         if (
