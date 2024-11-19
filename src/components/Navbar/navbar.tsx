@@ -18,7 +18,6 @@ import { faChevronDown, faBars } from "@fortawesome/free-solid-svg-icons";
 import Link from "next/link";
 import LogoutAction from "@/hooks/(auth)/logout/logoutAction";
 import findAction, { Employee } from "@/hooks/employee/findAction";
-import { useToast } from "@/hooks/use-toast";
 import ProfileDialog from "@/components/ProfileDialog"; 
 
 export default function Navbar({

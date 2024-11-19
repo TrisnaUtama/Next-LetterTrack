@@ -1,9 +1,15 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 
 export interface Department {
   department_id: number;
+  department_name: string;
+  department_head: string;
+}
+
+export interface AddDepartment {
   department_name: string;
   department_head: string;
 }
@@ -51,4 +57,42 @@ export async function getDepartments(): Promise<GetDepartmentsResponse> {
       message: error.message,
     };
   }
+}
+
+export async function addDepartment(data: AddDepartment){
+  if(!tokenParsed)
+    return {
+      status: false,
+      message: "No user token found in cookies.",
+    };
+
+    const token = tokenParsed.token;
+
+    try{
+      const res = await fetch(`${process.env.ROOT_URL}/api/departments`, {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(data)
+      })
+
+      if(!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+
+
+      const responseData = await res.json();
+
+     return {
+      status: true,
+      message: "Successfully added new department",
+      data: responseData.data, 
+    };
+    }catch(error:any){
+      console.error("Error fetching departments:", error);
+      return {
+        status: false,
+        message: error.message,
+      };
+    }
 }
