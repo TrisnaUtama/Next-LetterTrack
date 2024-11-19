@@ -60,8 +60,6 @@ export default function AddDepartmentDialog({
     const response = await addDepartment(department);
     setLoader(false);
 
-    console.log(response);
-
     if (!response?.status) {
       toast({
         variant: "destructive",
@@ -79,7 +77,10 @@ export default function AddDepartmentDialog({
         department_name: "",
       });
       onClose();
-      router.push('/superadmin')
+      router.push("/superadmin");
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     }
   };
 

@@ -47,6 +47,8 @@ import {
   getDepartments,
 } from "@/hooks/department/departmentAction";
 
+import ConfirmationDialog from "@/components/ConfirmationDialog";
+
 export type EmployeeStatus = "ACTIVE" | "UNACTIVE";
 export type Type = 1 | 2 | 3 | 4;
 
@@ -150,7 +152,8 @@ export default function EnhancedDataTable() {
         return (
           <div className="flex justify-center items-center">
             <Badge
-              className={`font-bold ${colorClass} rounded hover:bg-green-600`}>
+              className={`font-bold ${colorClass} rounded hover:bg-green-600`}
+            >
               {status}
             </Badge>
           </div>
@@ -163,9 +166,8 @@ export default function EnhancedDataTable() {
         <div className="flex justify-center items-center">
           <Button
             variant="ghost"
-            onClick={() =>
-              column.toggleSorting(column.getIsSorted() === "asc")
-            }>
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
             Email
             <CaretSortIcon className="ml-2 h-4 w-4" />
           </Button>
@@ -222,40 +224,52 @@ export default function EnhancedDataTable() {
       enableHiding: false,
       cell: ({ row }) => {
         const employee = row.original;
+        const [confirmationOpen, setConfirmationOpen] = useState(false);
+
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <DotsHorizontalIcon className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[160px]">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem
-                className="flex justify-center cursor-pointer"
-                onClick={() =>
-                  navigator.clipboard.writeText(employee.employee_id)
-                }>
-                Copy Employee ID
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="flex justify-center">
-                <Link
-                  href={`/superadmin/employees/${employee.employee_id}/update`}>
-                  Edit
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="flex justify-center">
-                <Link
-                  href="#"
-                  onClick={() => handleDeleteEmployee(employee.employee_id)}>
+          <div>
+            {confirmationOpen && (
+              <ConfirmationDialog
+                id={employee.employee_id}
+                type="Employee"
+                onClose={() => setConfirmationOpen(false)}
+              />
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <span className="sr-only">Open menu</span>
+                  <DotsHorizontalIcon className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[160px]">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuItem
+                  className="flex justify-center cursor-pointer"
+                  onClick={() =>
+                    navigator.clipboard.writeText(employee.employee_id)
+                  }
+                >
+                  Copy Employee ID
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="flex justify-center">
+                  <Link
+                    href={`/superadmin/employees/${employee.employee_id}/update`}
+                  >
+                    Edit
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="flex justify-center"
+                  onClick={() => setConfirmationOpen(true)}
+                >
                   Delete
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         );
       },
     },
@@ -309,7 +323,8 @@ export default function EnhancedDataTable() {
         <div className="p-1 space-x-2">
           <Link
             href="/superadmin/register"
-            className="p-3 rounded-md bg-gradient-to-r from-[#01557B] to-[#019BE1] hover:bg-gradient-to-r hover:from-[#01547be2] hover:to-[#019ae1dc] cursor-pointer text-white font-medium text-sm">
+            className="p-3 rounded-md bg-gradient-to-r from-[#01557B] to-[#019BE1] hover:bg-gradient-to-r hover:from-[#01547be2] hover:to-[#019ae1dc] cursor-pointer text-white font-medium text-sm"
+          >
             Add Employee
           </Link>
 
@@ -323,7 +338,8 @@ export default function EnhancedDataTable() {
                 .getColumn("employee_type_id")
                 ?.setFilterValue(event.target.value)
             }
-            className="text-[12px] border border-gray-300 rounded-md text-gray-600 h-10 p-2 bg-white hover:border-gray-400 focus:outline-none">
+            className="text-[12px] border border-gray-300 rounded-md text-gray-600 h-10 p-2 bg-white hover:border-gray-400 focus:outline-none"
+          >
             <option value="">All Employee Types</option>
             {Object.entries(employeeType).map(([key, value]) => (
               <option key={key} value={key}>
@@ -342,7 +358,8 @@ export default function EnhancedDataTable() {
                 .getColumn("department_id")
                 ?.setFilterValue(event.target.value)
             }
-            className="border text-[12px] border-gray-300 rounded-md text-gray-600 h-10 p-2 bg-white hover:border-gray-400 focus:outline-none">
+            className="border text-[12px] border-gray-300 rounded-md text-gray-600 h-10 p-2 bg-white hover:border-gray-400 focus:outline-none"
+          >
             <option value="">All Departments</option>
             {departments.map((dep) => (
               <option key={dep.department_id} value={dep.department_id}>
@@ -361,7 +378,8 @@ export default function EnhancedDataTable() {
                 pageIndex: 0,
               }));
             }}
-            className="border text-[12px] border-gray-300 rounded-md text-gray-600 h-10 p-2 bg-white hover:border-gray-400 focus:outline-none">
+            className="border text-[12px] border-gray-300 rounded-md text-gray-600 h-10 p-2 bg-white hover:border-gray-400 focus:outline-none"
+          >
             {[5, 10, 20, 50].map((size) => (
               <option key={size} value={size}>
                 Show {size}
@@ -409,7 +427,8 @@ export default function EnhancedDataTable() {
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  className="hover:bg-gray-50 transition-colors duration-200">
+                  className="hover:bg-gray-50 transition-colors duration-200"
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
@@ -463,7 +482,8 @@ export default function EnhancedDataTable() {
               size="sm"
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
-              className="hover:bg-gray-100 transition-colors duration-200">
+              className="hover:bg-gray-100 transition-colors duration-200"
+            >
               Previous
             </Button>
             <Button
@@ -471,7 +491,8 @@ export default function EnhancedDataTable() {
               size="sm"
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
-              className="hover:bg-gray-100 transition-colors duration-200">
+              className="hover:bg-gray-100 transition-colors duration-200"
+            >
               Next
             </Button>
           </div>

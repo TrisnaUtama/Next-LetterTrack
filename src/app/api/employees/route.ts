@@ -109,9 +109,6 @@ export async function DELETE(request: NextRequest) {
       { status: 200 }
     );
   } catch (error: any) {
-    return NextResponse.json(
-      { message: "An error occurred while processing your request." },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: error.message }, { status: 500 });
   }
 }

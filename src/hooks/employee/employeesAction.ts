@@ -111,13 +111,13 @@ export async function deleteEmployee(employee_id: string) {
     }
     const responseData = await res.json();
     return {
-      success: true,
-      data: responseData.data,
+      status: true,
+      data: responseData,
     };
   } catch (error: any) {
     console.error("Fetch error:", error);
     return {
-      success: false,
+      status: false,
       message:
         error.message || "An error occurred while registering the employee.",
     };

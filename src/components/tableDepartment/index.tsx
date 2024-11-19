@@ -122,7 +122,11 @@ export const columns: ColumnDef<Department>[] = [
       return (
         <div>
           {confirmationOpen && (
-            <ConfirmationDialog onClose={() => setConfirmationOpen(false)} />
+            <ConfirmationDialog
+              id={department.department_id}
+              type="Department"
+              onClose={() => setConfirmationOpen(false)}
+            />
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

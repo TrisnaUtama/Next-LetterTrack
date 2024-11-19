@@ -1,14 +1,64 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Modal from "../Modal";
 import { Button } from "../ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
+import { deleteDepartment } from "@/hooks/department/departmentAction";
+import { deleteEmployee } from "@/hooks/employee/employeesAction";
 
 export default function ConfirmationDialog({
   onClose,
+  type,
+  id,
 }: {
   onClose: () => void;
+  type: string;
+  id: any;
 }) {
+  const [loader, setLoader] = useState(false);
+  const { toast } = useToast();
+
+  const handleDelete = async () => {
+    setLoader(true);
+    let res;
+    if (type === "Department") {
+      res = await deleteDepartment(id);
+    } else {
+      res = await deleteEmployee(id);
+    }
+    console.log("response ", res);
+    setLoader(false);
+    if (!res.status) {
+      toast({
+        variant: "destructive",
+        title: "Something went wrong!",
+        description: `Cannot delete this ${type}`,
+      });
+      onClose();
+    } else {
+      onClose();
+      toast({
+        variant: "success",
+        title: `${type} Deleted Successfully`,
+        description: `The ${type} has been successfully removed from the system.`,
+      });
+
+      onClose();
+      setTimeout(() => window.location.reload(), 1000);
+    }
+  };
+
+  const handleCancel = () => {
+    toast({
+      variant: "destructive",
+      title: `Canceling ${type} Deletion`,
+      description: `The  ${type} deletion process has been successfully canceled.`,
+    });
+    onClose();
+  };
+
   return (
     <Modal>
       <div className="max-w-2xl max-h-[90vh]">
@@ -21,8 +71,12 @@ export default function ConfirmationDialog({
             department data from the servers.
           </p>
           <div className="flex justify-end items-center space-x-2 mt-2">
-            <Button onClick={onClose}>Cancle</Button>
-            <Button>Continue</Button>
+            <Button variant="ghost" onClick={handleCancel}>
+              Cancle
+            </Button>
+            <Button onClick={handleDelete}>
+              {loader ? <Loader2 className="animate-spin" /> : "Continue"}
+            </Button>
           </div>
         </div>
       </div>

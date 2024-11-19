@@ -1,7 +1,6 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
 
 export interface Department {
   department_id: number;
@@ -59,40 +58,75 @@ export async function getDepartments(): Promise<GetDepartmentsResponse> {
   }
 }
 
-export async function addDepartment(data: AddDepartment){
-  if(!tokenParsed)
+export async function addDepartment(data: AddDepartment) {
+  if (!tokenParsed)
     return {
       status: false,
       message: "No user token found in cookies.",
     };
 
-    const token = tokenParsed.token;
+  const token = tokenParsed.token;
 
-    try{
-      const res = await fetch(`${process.env.ROOT_URL}/api/departments`, {
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(data)
-      })
+  try {
+    const res = await fetch(`${process.env.ROOT_URL}/api/departments`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
 
-      if(!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+    if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
 
+    const responseData = await res.json();
 
-      const responseData = await res.json();
-
-     return {
+    return {
       status: true,
       message: "Successfully added new department",
-      data: responseData.data, 
+      data: responseData.data,
     };
-    }catch(error:any){
-      console.error("Error fetching departments:", error);
-      return {
-        status: false,
-        message: error.message,
-      };
-    }
+  } catch (error: any) {
+    console.error("Error fetching departments:", error);
+    return {
+      status: false,
+      message: error.message,
+    };
+  }
+}
+
+export async function deleteDepartment(id: number) {
+  if (!tokenParsed)
+    return {
+      status: false,
+      message: "No user token found in cookies.",
+    };
+
+  const token = tokenParsed.token;
+
+  try {
+    const res = await fetch(`${process.env.ROOT_URL}/api/departments`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ department_id: Number(id) }),
+    });
+
+    if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+    const responseData = await res.json();
+
+    return {
+      status: true,
+      message: "Successsfully Delete Data Department",
+      data: responseData,
+    };
+  } catch (error: any) {
+    console.error("Error fetching departments:", error);
+    return {
+      status: false,
+      message: error.message,
+    };
+  }
 }

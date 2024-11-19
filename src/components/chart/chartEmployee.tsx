@@ -89,8 +89,6 @@ export default function Chart() {
     return prevMonth;
   };
 
-  console.log(lastData);
-
   return (
     <Card>
       <CardHeader>
