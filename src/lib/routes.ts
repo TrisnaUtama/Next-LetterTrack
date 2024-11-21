@@ -1,8 +1,4 @@
-import {
-  faHome,
-  faUser,
-  faEnvelope,
-} from "@fortawesome/free-solid-svg-icons";
+import { faHome, faUser, faEnvelope } from "@fortawesome/free-solid-svg-icons";
 
 export type Route = {
   pathname: string;
@@ -24,7 +20,6 @@ export const getRoutes = (employeeTypeId: number | null): Route[] => {
       ];
     case 2:
       return [
-        { pathname: "/secretary", icon: faHome, menu: "Home" },
         {
           pathname: "/letter",
           icon: faEnvelope,
@@ -33,7 +28,6 @@ export const getRoutes = (employeeTypeId: number | null): Route[] => {
       ];
     case 3:
       return [
-        { pathname: "/receptionist", icon: faHome, menu: "Home" },
         {
           pathname: "/letter",
           icon: faEnvelope,
@@ -42,7 +36,6 @@ export const getRoutes = (employeeTypeId: number | null): Route[] => {
       ];
     case 4:
       return [
-        { pathname: "/division", icon: faHome, menu: "Home" },
         {
           pathname: "/letter",
           icon: faEnvelope,

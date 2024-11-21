@@ -1,4 +1,4 @@
-"use server"
+"use server";
 
 import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
@@ -90,6 +90,23 @@ export async function POST(request: NextRequest) {
     login_user_department_id,
   } = await request.json();
 
+  const existLetter = await prisma.letter.findUnique({
+    where: {
+      letter_id: letter_id,
+    },
+  });
+
+  if (letter_id == existLetter?.letter_id) {
+    return NextResponse.json(
+      {
+        message: "Letter id already exists !",
+      },
+      {
+        status: 400,
+      }
+    );
+  }
+
   try {
     const letter = await prisma.letter.create({
       data: {
@@ -130,5 +147,60 @@ export async function POST(request: NextRequest) {
         status: 500,
       }
     );
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  const { letter_id, sender, subject, recipient, letter_type, department_id } =
+    await request.json();
+
+  if (!letter_id)
+    NextResponse.json({
+      message: "letter not found",
+      status: 400,
+    });
+
+  try {
+    const existingSignatures = await prisma.signature.findMany({
+      where: { letter_id: letter_id },
+    });
+
+    const existingDepartmentIds = existingSignatures.map(
+      (signature) => signature.department_id
+    );
+
+    const newDepartmentIds = department_id.filter(
+      (id: number) => !existingDepartmentIds.includes(id)
+    );
+
+    const response = await prisma.letter.update({
+      where: {
+        letter_id: letter_id,
+      },
+      data: {
+        sender: sender,
+        subject: subject,
+        recipient: recipient,
+        letter_type_id: letter_type,
+        letter_date: new Date(),
+        Signature: {
+          create: newDepartmentIds.map((id: number) => ({
+            department: {
+              connect: { department_id: id },
+            },
+          })),
+        },
+      },
+    });
+
+    return NextResponse.json({
+      message: "Letter updated successfully",
+      data: response,
+    });
+  } catch (error: any) {
+    console.log(error.message);
+    NextResponse.json({
+      mmessage: error.message || "An occured error while processing request",
+    });
   }
 }

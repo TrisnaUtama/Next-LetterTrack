@@ -35,20 +35,18 @@ import {
   getDepartments,
 } from "@/hooks/department/departmentAction";
 
-import { LetterData, addLetter } from "@/hooks/letter/letterAction";
+import { LetterData, getSpecificLetter } from "@/hooks/letter/letterAction";
 
-export default function AddLetter({ params }: { params: { id: number } }) {
+export default function EditLetter({ params }: { params: { id: string } }) {
   const [data, setData] = useState<LetterData>({
-    letter_id: "",
+    letter_id: params.id,
     sender: "",
     subject: "",
     recipient: "",
     letter_type: 0,
-    department_id: [params.id],
+    department_id: [],
     login_user_department_id: 0,
   });
-
-  
 
   const [departments, setDepartments] = useState<
     { label: string; value: string }[]
@@ -74,6 +72,28 @@ export default function AddLetter({ params }: { params: { id: number } }) {
     };
     fetchDepartments();
   }, []);
+
+  useEffect(() => {
+    const fetchLetter = async () => {
+      const res = await getSpecificLetter(data.letter_id);
+      if (res.status) {
+        const letterData = res.data;
+
+        const departmentIds = letterData.Signature.map((sig: any) =>
+          sig.department_id.toString()
+        );
+
+        setData({
+          ...letterData,
+          letter_type: letterData.letter_type_id,
+          department_id: departmentIds,
+        });
+      } else {
+        console.error("Failed to fetch letter:", res.message);
+      }
+    };
+    fetchLetter();
+  }, [data.letter_id]);
 
   const Letter_Type: Record<number, string> = {
     1: "Internal",
@@ -119,8 +139,6 @@ export default function AddLetter({ params }: { params: { id: number } }) {
     if (data.letter_type === 0)
       newErrors.letter_type = "Letter type is required.";
     if (!data.subject) newErrors.subject = "Subject is required.";
-    if (data.department_id.length === 0)
-      newErrors.department_id = "At least one department must be selected.";
 
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0)
@@ -137,51 +155,55 @@ export default function AddLetter({ params }: { params: { id: number } }) {
     if (!validateForm()) return;
 
     setLoading(true);
-    const response = await addLetter(data);
+    // const response = await addLetter(data);
     setLoading(false);
 
-    if (response.success) {
-      toast({
-        variant: "success",
-        title: "Letter Added",
-        description: "The letter was successfully added.",
-      });
-      setData({
-        letter_id: "",
-        sender: "",
-        subject: "",
-        recipient: "",
-        letter_type: 0,
-        department_id: [],
-        login_user_department_id: 0,
-      });
-      router.push("/letter/");
-    } else {
-      toast({
-        variant: "destructive",
-        title: "There is Something Wrong!",
-        description: response.message,
-      });
-    }
+    // if (response.success) {
+    //   toast({
+    //     variant: "success",
+    //     title: "Letter Added",
+    //     description: "The letter was successfully added.",
+    //   });
+    //   setData({
+    //     letter_id: "",
+    //     letter_date: "",
+    //     letter_type_id: 0,
+    //     sender: "",
+    //     subject: "",
+    //     recipient: "",
+    //     status: "",
+    //     Signature: [],
+    //   });
+    //   router.push("/letter/");
+    // } else {
+    //   toast({
+    //     variant: "destructive",
+    //     title: "Error",
+    //     description: response.message,
+    //   });
+    // }
   };
+
+  console.log(data);
 
   return (
     <div className="mb-10">
       <div className="bg-white border-b-2 p-8">
         <Link
           href="/letter"
-          className="inline-block cursor-pointer hover:text-black/70">
+          className="inline-block cursor-pointer hover:text-black/70"
+        >
           <div className="flex items-center space-x-1">
             <ArrowDown className="rotate-90 w-4" />
             <p className="text-sm">Back</p>
           </div>
         </Link>
-        <h1 className="mt-2 font-semibold text-2xl">Add New Letter</h1>
+        <h1 className="mt-2 font-semibold text-2xl">Edit Letter</h1>
         <p className="text-slate-500 text-sm mt-1">
-          This feature allows users to easily create and manage letters within
-          the tracking system. You can specify details such as the recipient,
+          This feature allows users to easily edit and manage letters within the
+          tracking system. You can specify details such as the recipient,
           subject, and content of the letter, <br /> ensuring accurate
-          record-keeping and efficient communication. Add new letters to keep
+          record-keeping and efficient communication. Edit the letters to keep
           your documentation organized and accessible.
         </p>
       </div>
@@ -192,7 +214,9 @@ export default function AddLetter({ params }: { params: { id: number } }) {
           <p className="text-sm">Please provide all of the form needs.</p>
           <div className="grid grid-cols-3 mt-4 space-x-10">
             <div>
-              <Label htmlFor="letter_id">Letter Id <span className="text-red-500">*</span></Label>
+              <Label htmlFor="letter_id">
+                Letter Id <span className="text-red-500">*</span>
+              </Label>
               <Input
                 type="text"
                 id="letter_id"
@@ -208,21 +232,24 @@ export default function AddLetter({ params }: { params: { id: number } }) {
               )}
             </div>
             <div>
-              <Label htmlFor="sender">Sender <span className="text-red-500">*</span></Label>
-              <Select onValueChange={handleSelectChangeDepartmentSender}>
+              <Label htmlFor="sender">
+                Sender <span className="text-red-500">*</span>
+              </Label>
+              <Select
+                onValueChange={handleSelectChangeDepartmentSender}
+                value={data.sender}
+              >
                 <SelectTrigger
                   className={`mt-[1px] h-10 border ${
                     errors.sender ? "border-red-500" : "border-gray-300"
-                  } focus:border-blue-500 focus:outline-none`}>
+                  } focus:border-blue-500 focus:outline-none`}
+                >
                   <SelectValue placeholder="Select Sender of the Letter" />
                 </SelectTrigger>
                 <SelectContent>
-                  {departments.map((value) => (
-                    <SelectItem
-                      disabled={value.value === params.id.toString()}
-                      key={value.value}
-                      value={value.label}>
-                      {value.label}
+                  {departments.map((dept) => (
+                    <SelectItem key={dept.value} value={dept.value}>
+                      {dept.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -232,7 +259,9 @@ export default function AddLetter({ params }: { params: { id: number } }) {
               )}
             </div>
             <div>
-              <Label htmlFor="recipient">Recipient <span className="text-red-500">*</span></Label>
+              <Label htmlFor="recipient">
+                Recipient <span className="text-red-500">*</span>
+              </Label>
               <Input
                 type="text"
                 id="recipient"
@@ -250,12 +279,18 @@ export default function AddLetter({ params }: { params: { id: number } }) {
           </div>
           <div className="grid grid-cols-2 mt-4 space-x-10">
             <div>
-              <Label htmlFor="letter_type">Letter Type <span className="text-red-500">*</span></Label>
-              <Select onValueChange={handleSelectChange}>
+              <Label htmlFor="letter_type">
+                Letter Type <span className="text-red-500">*</span>
+              </Label>
+              <Select
+                onValueChange={handleSelectChange}
+                value={String(data.letter_type)}
+              >
                 <SelectTrigger
                   className={`mt-[6px] h-10 border ${
                     errors.letter_type ? "border-red-500" : "border-gray-300"
-                  } focus:border-blue-500 focus:outline-none`}>
+                  } focus:border-blue-500 focus:outline-none`}
+                >
                   <SelectValue placeholder="Select Letter Type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -271,7 +306,9 @@ export default function AddLetter({ params }: { params: { id: number } }) {
               )}
             </div>
             <div className="mt-0.5">
-              <Label htmlFor="department_id">Department <span className="text-red-500">*</span></Label>
+              <Label htmlFor="department_id">
+                Department <span className="text-red-500">*</span>
+              </Label>
               <MultiSelect
                 className={`mt-1 h-10 border ${
                   errors.department_id ? "border-red-500" : "border-gray-300"
@@ -291,7 +328,9 @@ export default function AddLetter({ params }: { params: { id: number } }) {
           </div>
           <div className="grid mt-4 space-x-10">
             <div>
-              <Label htmlFor="subject">Subject <span className="text-red-500">*</span></Label>
+              <Label htmlFor="subject">
+                Subject <span className="text-red-500">*</span>
+              </Label>
               <Textarea
                 id="subject"
                 placeholder="enter the letter Subject"
@@ -312,7 +351,8 @@ export default function AddLetter({ params }: { params: { id: number } }) {
             <AlertDialogTrigger asChild>
               <Button
                 onClick={validateForm}
-                className="mt-5 bg-gradient-to-r from-[#01557B] to-[#019BE1] p-2 rounded-lg text-white font-semibold text-sm hover:from-[#01547be2] hover:to-[#019ae1dc]">
+                className="mt-5 bg-gradient-to-r from-[#01557B] to-[#019BE1] p-2 rounded-lg text-white font-semibold text-sm hover:from-[#01547be2] hover:to-[#019ae1dc]"
+              >
                 Submit
               </Button>
             </AlertDialogTrigger>
@@ -330,7 +370,8 @@ export default function AddLetter({ params }: { params: { id: number } }) {
                   <Button
                     type="button"
                     onClick={handleSubmit}
-                    disabled={loading}>
+                    disabled={loading}
+                  >
                     {loading ? <span>Loading...</span> : "Continue"}
                   </Button>
                 </AlertDialogFooter>

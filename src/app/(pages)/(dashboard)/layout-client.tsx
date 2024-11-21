@@ -18,7 +18,7 @@ export default function DashboardLayoutClient({
   };
 
   return (
-    <div className="flex">
+    <div className="flex bg-[#FBFBFB]">
       <Sidebar isOpen={handlerSidebar} employeeTypeId={employeeTypeId} />
       <div className={`flex-1 ${handlerSidebar ? "ml-[20%]" : "ml-[6%]"}`}>
         <Navbar

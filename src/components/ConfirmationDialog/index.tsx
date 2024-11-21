@@ -62,7 +62,7 @@ export default function ConfirmationDialog({
   return (
     <Modal>
       <div className="max-w-2xl max-h-[90vh]">
-        <h1 className="font-bold text-2xl">Confirmation Modal</h1>
+        <h1 className="font-bold text-2xl">Confirmation Dialog</h1>
         <div className="mt-4">
           <p className="font-semibold text-[15px]">Are you sure ?</p>
           <p className="text-sm">

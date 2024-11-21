@@ -62,11 +62,11 @@ export default async function loginAction(
       if (user_role == 1) {
         path = "/superadmin";
       } else if (user_role == 2) {
-        path = "/secretary";
+        path = "/letter";
       } else if (user_role == 3) {
-        path = "/receptionist";
+        path = "/letter";
       } else {
-        path = "/division";
+        path = "/letter";
       }
       return { success: true, redirect: path };
     } else {

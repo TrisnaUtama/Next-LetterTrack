@@ -163,7 +163,8 @@ export default function EnhancedDataTable() {
           <Button
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="font-semibold text-gray-700 hover:bg-gray-100">
+            className="font-semibold text-gray-700 hover:bg-gray-100"
+          >
             Letter Type
             <CaretSortIcon className="ml-2 h-4 w-4" />
           </Button>
@@ -241,7 +242,8 @@ export default function EnhancedDataTable() {
           <Button
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="font-semibold text-gray-700 hover:bg-gray-100">
+            className="font-semibold text-gray-700 hover:bg-gray-100"
+          >
             Sign Status
             <CaretSortIcon className="ml-2 h-4 w-4" />
           </Button>
@@ -288,7 +290,8 @@ export default function EnhancedDataTable() {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="h-8 w-8 p-0 hover:bg-gray-100 transition-colors duration-200">
+                className="h-8 w-8 p-0 hover:bg-gray-100 transition-colors duration-200"
+              >
                 <span className="sr-only">Open menu</span>
                 <DotsHorizontalIcon className="h-4 w-4" />
               </Button>
@@ -306,26 +309,48 @@ export default function EnhancedDataTable() {
                     title: "Success Copying",
                     description: `successfuly copy letter id ${letter.letter_id}`,
                   });
-                }}>
+                }}
+              >
                 Copy Letter ID
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => setIsOpen(true)}
-                className="flex justify-center cursor-pointer hover:bg-gray-100 transition-colors duration-200"
-                disabled={
-                  letter.status == "SIGNED" || letter.status == "NOT_ARRIVE"
-                }>
-                {letter.status == "SIGNED"
-                  ? "Already Signed"
-                  : letter.status == "NOT_ARRIVE"
-                  ? "Wait The Letter"
-                  : "Sign Letter"}
-              </DropdownMenuItem>
+
+              {letter.status == "ARRIVE" &&
+                employeeLogin?.employee_type_id != 4 && (
+                  <div>
+                    <DropdownMenuSeparator />
+                    <Link
+                      href={`/letter/${letter.letter_id}/edit`}
+                      className="flex justify-center cursor-pointer hover:bg-gray-100 transition-colors duration-200 text-sm p-1.5 rounded-md"
+                    >
+                      Edit
+                    </Link>
+                  </div>
+                )}
+
+              {employeeLogin?.employee_type_id != 4 && (
+                <div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => setIsOpen(true)}
+                    className="flex justify-center cursor-pointer hover:bg-gray-100 transition-colors duration-200"
+                    disabled={
+                      letter.status == "SIGNED" || letter.status == "NOT_ARRIVE"
+                    }
+                  >
+                    {letter.status == "SIGNED"
+                      ? "Already Signed"
+                      : letter.status == "NOT_ARRIVE"
+                      ? "Wait The Letter"
+                      : "Sign Letter"}
+                  </DropdownMenuItem>
+                </div>
+              )}
+
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="felx justify-center"
-                onSelect={() => setDetailLetterOpen(true)}>
+                onSelect={() => setDetailLetterOpen(true)}
+              >
                 Detail Letter
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -466,7 +491,8 @@ export default function EnhancedDataTable() {
                 setLetterFiltered(letter);
               }
             }}
-            className="border border-gray-200 rounded-md text-gray-600 h-10 pl-3 pr-8 bg-white hover:border-gray-400 focus:outline-none transition-colors duration-200 text-sm">
+            className="border border-gray-200 rounded-md text-gray-600 h-10 pl-3 pr-8 bg-white hover:border-gray-400 focus:outline-none transition-colors duration-200 text-sm"
+          >
             <option value="">All Status</option>
             {Object.entries(SignatureStatus).map(([key, value]) => (
               <option value={key} key={key}>
@@ -485,7 +511,8 @@ export default function EnhancedDataTable() {
             }}
             className="border border-gray-200 rounded-md text-gray-600 
             h-10 pl-3 pr-8 bg-white hover:border-gray-400 
-            focus:outline-none transition-colors duration-200 text-sm">
+            focus:outline-none transition-colors duration-200 text-sm"
+          >
             {[5, 10, 20, 50].map((size) => (
               <option key={size} value={size}>
                 Show {size}
@@ -496,7 +523,8 @@ export default function EnhancedDataTable() {
           {employeeLogin?.employee_type_id != 4 && (
             <Link
               href={`/letter/${employeeLogin?.department_id}/add`}
-              className="flex items-center px-4 py-2 rounded-md bg-gradient-to-r from-[#01557B] to-[#019BE1] hover:bg-gradient-to-r hover:from-[#01547be2] hover:to-[#019ae1dc] cursor-pointer text-white font-medium text-sm transition-colors duration-200">
+              className="flex items-center px-4 py-2 rounded-md bg-gradient-to-r from-[#01557B] to-[#019BE1] hover:bg-gradient-to-r hover:from-[#01547be2] hover:to-[#019ae1dc] cursor-pointer text-white font-medium text-sm transition-colors duration-200"
+            >
               <Plus className="w-4 h-4 mr-2" />
               Add Letter
             </Link>
@@ -541,7 +569,8 @@ export default function EnhancedDataTable() {
                 <TableRow
                   key={`${row.id}-${rowIndex}`}
                   data-state={row.getIsSelected() && "selected"}
-                  className="hover:bg-gray-50 transition-colors duration-200">
+                  className="hover:bg-gray-50 transition-colors duration-200"
+                >
                   {row.getVisibleCells().map((cell, cellIndex) => (
                     <TableCell key={`${cell.id}-${cellIndex}`} className="py-3">
                       {flexRender(
@@ -595,7 +624,8 @@ export default function EnhancedDataTable() {
               size="sm"
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
-              className="hover:bg-gray-100 transition-colors duration-200">
+              className="hover:bg-gray-100 transition-colors duration-200"
+            >
               Previous
             </Button>
             <Button
@@ -603,7 +633,8 @@ export default function EnhancedDataTable() {
               size="sm"
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
-              className="hover:bg-gray-100 transition-colors duration-200">
+              className="hover:bg-gray-100 transition-colors duration-200"
+            >
               Next
             </Button>
           </div>

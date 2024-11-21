@@ -2,15 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { TrendingUp } from "lucide-react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  XAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
-import { LetterChart, getAllLetter } from "@/hooks/letter/letterAction";
+import { Label, Pie, PieChart, Cell, ResponsiveContainer } from "recharts"; // Import Cell
 
 import {
   Card,
@@ -23,116 +15,146 @@ import {
 import {
   ChartConfig,
   ChartContainer,
+  ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
 
+import {
+  getAllEmployees,
+  Employee,
+  FetchEmployeesResult,
+} from "@/hooks/employee/employeesAction";
+
 const chartConfig = {
-  internal: {
-    label: "Internal",
+  male: {
+    label: "Male",
     color: "hsl(var(--chart-1))",
   },
-  external: {
-    label: "External",
+  female: {
+    label: "Female",
     color: "hsl(var(--chart-2))",
   },
 } satisfies ChartConfig;
 
-export default function Chart() {
-  const [letterData, setLetterData] = useState<any[]>([]);
-  const [lastData, setLastData] = useState<any[]>([]);
+export default function ChartEmployee() {
+  const [employee, setEmployee] = useState<Employee[]>([]);
+  const [genderData, setGenderData] = useState<{
+    male: number;
+    female: number;
+  }>({
+    male: 0,
+    female: 0,
+  });
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await getAllLetter();
-      const formattedData = formatChartData(res.data);
-      const lastData = calculatePercentage(formattedData);
-      setLetterData(formattedData);
-      setLastData(lastData);
+      try {
+        const res: FetchEmployeesResult = await getAllEmployees();
+        if (res.success) {
+          setEmployee(res.data);
+          const maleCount = res.data.filter(
+            (emp: Employee) => emp.gender === "MALE"
+          ).length;
+          const femaleCount = res.data.filter(
+            (emp: Employee) => emp.gender === "FEMALE"
+          ).length;
+          setGenderData({ male: maleCount, female: femaleCount });
+        } else {
+          setEmployee([]);
+          setGenderData({ male: 0, female: 0 });
+        }
+      } catch (error: any) {
+        console.log(error.message);
+        setEmployee([]);
+        setGenderData({ male: 0, female: 0 });
+      }
     };
+
     fetchData();
   }, []);
 
-  const formatChartData = (letters: any[]) => {
-    const monthlyData: any = {};
-
-    letters.forEach((letter) => {
-      const monthYear = new Date(letter.letter_date).toLocaleString("default", {
-        month: "long",
-        year: "numeric",
-      });
-
-      if (!monthlyData[monthYear]) {
-        monthlyData[monthYear] = {
-          internal: 0,
-          external: 0,
-        };
-      }
-
-      if (letter.letter_type_id === 1) {
-        monthlyData[monthYear].internal++;
-      } else if (letter.letter_type_id === 2) {
-        monthlyData[monthYear].external++;
-      }
-    });
-
-    return Object.keys(monthlyData).map((monthYear) => ({
-      month: monthYear,
-      internal: monthlyData[monthYear].internal,
-      external: monthlyData[monthYear].external,
-    }));
-  };
-
-  const calculatePercentage = (letter: any[]) => {
-    const currentMonth = letter[letterData.length];
-    const prevMonth = letter[letterData.length - 1];
-
-    return prevMonth;
-  };
+  const pieChartData = [
+    {
+      name: "Male",
+      value: genderData.male,
+      color: chartConfig.male.color,
+    },
+    {
+      name: "Female",
+      value: genderData.female,
+      color: chartConfig.female.color,
+    },
+  ];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Letter Type Chart</CardTitle>
-        <CardDescription>
-          Showing the ammount of letters type per month
-        </CardDescription>
+    <Card className="h-96">
+      <CardHeader className="items-center pb-0">
+        <CardTitle>Employee Gender Distribution</CardTitle>
+        <CardDescription>January - June 2024</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1 pb-0">
         <ChartContainer config={chartConfig}>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={letterData}>
-              <CartesianGrid vertical={false} />
-              <XAxis
-                dataKey="month"
-                tickLine={false}
-                tickMargin={10}
-                axisLine={false}
-                tickFormatter={(value) => value}
-              />
-              <Tooltip
+            <PieChart>
+              <ChartTooltip
                 cursor={false}
-                content={<ChartTooltipContent indicator="dashed" />}
+                content={<ChartTooltipContent hideLabel />}
               />
-              <Bar
-                dataKey="internal"
-                fill={chartConfig.internal.color}
-                radius={4}
-              />
-              <Bar
-                dataKey="external"
-                fill={chartConfig.external.color}
-                radius={4}
-              />
-            </BarChart>
+              <Pie
+                data={pieChartData}
+                dataKey="value"
+                nameKey="name"
+                innerRadius={60}
+                outerRadius={80}
+                strokeWidth={5}
+                paddingAngle={5}
+              >
+                {pieChartData.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={entry.name === "Male" ? "#019BE1" : "#66B82F"}
+                  />
+                ))}
+                <Label
+                  content={({ viewBox }) => {
+                    if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                      return (
+                        <text
+                          x={viewBox.cx}
+                          y={viewBox.cy}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                        >
+                          <tspan
+                            x={viewBox.cx}
+                            y={viewBox.cy}
+                            className="fill-foreground text-3xl font-bold"
+                          >
+                            {employee.length.toLocaleString()}
+                          </tspan>
+                          <tspan
+                            x={viewBox.cx}
+                            y={(viewBox.cy || 0) + 24}
+                            className="fill-muted-foreground"
+                          >
+                            Total Employees
+                          </tspan>
+                        </text>
+                      );
+                    }
+                  }}
+                />
+              </Pie>
+            </PieChart>
           </ResponsiveContainer>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="flex-col items-start gap-2 text-sm">
-        <div className="flex gap-2 font-medium leading-none">
+      <CardFooter className="flex-col gap-2 text-sm">
+        <div className="flex items-center gap-2 font-medium leading-none">
           Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
         </div>
         <div className="leading-none text-muted-foreground">
-          Showing letter status by month
+          Showing total employees for Angkasa Pura I
         </div>
       </CardFooter>
     </Card>

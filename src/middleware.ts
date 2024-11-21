@@ -46,6 +46,8 @@ export function middleware(request: NextRequest) {
           path.startsWith("/secretary")
         ) {
           return NextResponse.redirect(new URL("/division/", request.url));
+        } else if (path.includes("/letter/")) {
+          return NextResponse.redirect(new URL("/letter/", request.url));
         }
         break;
       default:
@@ -63,5 +65,6 @@ export const config = {
     "/secretary/:path*",
     "/receptionist/:path*",
     "/division/:path*",
+    "/letter/:path*",
   ],
 };

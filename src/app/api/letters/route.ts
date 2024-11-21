@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
       select: {
         letter_type_id: true,
         letter_date: true,
+        status: true,
         Signature: {
           select: {
             signed_date: true,
