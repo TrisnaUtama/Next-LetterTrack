@@ -66,7 +66,7 @@ const LetterDetailDialog: React.FC<LetterDetailDialogProps> = ({ letter }) => {
       minute: "2-digit",
       hourCycle: "h24",
     });
-    return formattedDate.replace(/pukul\s*/, '').replace(',', ', ');
+    return formattedDate.replace(/pukul\s*/, "").replace(",", ", ");
   };
 
   if (!letter) {
@@ -89,13 +89,15 @@ const LetterDetailDialog: React.FC<LetterDetailDialogProps> = ({ letter }) => {
             <Badge
               className={`transition-all duration-300 ${getLetterTypeColor(
                 letter.letter.letter_type.letter_type
-              )}`}>
+              )}`}
+            >
               {letter.letter.letter_type.letter_type}
             </Badge>
             <Badge
               className={`transition-all duration-300 ${getStatusColor(
                 letter.letter.status
-              )}`}>
+              )}`}
+            >
               {letter.letter.status === "ON_PROGRESS"
                 ? "ON PROGRESS"
                 : "COMPLETED"}
@@ -112,6 +114,12 @@ const LetterDetailDialog: React.FC<LetterDetailDialogProps> = ({ letter }) => {
                   Letter Information
                 </h3>
                 <div className="space-y-4">
+                  <div className="flex items-start space-x-2">
+                    <p className="text-sm font-medium w-24">Recepient:</p>
+                    <p className="text-sm flex-1 text-gray-700">
+                      {letter.letter.recipient}
+                    </p>
+                  </div>
                   <div className="flex items-start space-x-2">
                     <p className="text-sm font-medium w-24">Subject:</p>
                     <p className="text-sm flex-1 text-gray-700">
@@ -181,7 +189,8 @@ const LetterDetailDialog: React.FC<LetterDetailDialogProps> = ({ letter }) => {
                     ? [1, 2, 3].map((_, index) => (
                         <div
                           key={index}
-                          className="relative pl-8 border-l-2 border-gray-200">
+                          className="relative pl-8 border-l-2 border-gray-200"
+                        >
                           <Skeleton className="h-4 w-4 rounded-full" />
                           <Skeleton className="h-4 w-32 mb-2" />
                           <Skeleton className="h-4 w-24" />
@@ -199,7 +208,8 @@ const LetterDetailDialog: React.FC<LetterDetailDialogProps> = ({ letter }) => {
                         .map((sig, index) => (
                           <div
                             key={index}
-                            className="relative pl-8 border-l-2 border-gray-200">
+                            className="relative pl-8 border-l-2 border-gray-200"
+                          >
                             <div className="absolute -left-2 top-0">
                               <CheckCircle2
                                 className={

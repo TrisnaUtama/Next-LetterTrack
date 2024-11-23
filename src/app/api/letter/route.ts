@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
   if (letter_id == existLetter?.letter_id) {
     return NextResponse.json(
       {
-        message: "Letter id already exists !",
+        message: "Letter id already exists ! ",
       },
       {
         status: 400,
@@ -155,7 +155,7 @@ export async function PATCH(request: NextRequest) {
     await request.json();
 
   if (!letter_id)
-    NextResponse.json({
+    return NextResponse.json({
       message: "letter not found",
       status: 400,
     });
@@ -165,13 +165,39 @@ export async function PATCH(request: NextRequest) {
       where: { letter_id: letter_id },
     });
 
-    const existingDepartmentIds = existingSignatures.map(
-      (signature) => signature.department_id
+    const deletedDepartment = existingSignatures.filter(
+      (signature) => !department_id.includes(signature.department_id)
     );
 
+    if (deletedDepartment.length > 0) {
+      const deletedSignatureIds = deletedDepartment.map(
+        (signature) => signature.signature_id
+      );
+
+      await prisma.signature.deleteMany({
+        where: {
+          signature_id: {
+            in: deletedSignatureIds,
+          },
+        },
+      });
+    }
+
     const newDepartmentIds = department_id.filter(
-      (id: number) => !existingDepartmentIds.includes(id)
+      (newId: number) =>
+        !existingSignatures.some(
+          (currentDeartment) => currentDeartment.department_id == newId
+        )
     );
+
+    if (newDepartmentIds.length > 0) {
+      await prisma.signature.createMany({
+        data: newDepartmentIds.map((newId: number) => ({
+          letter_id: letter_id,
+          department_id: newId,
+        })),
+      });
+    }
 
     const response = await prisma.letter.update({
       where: {
@@ -182,14 +208,6 @@ export async function PATCH(request: NextRequest) {
         subject: subject,
         recipient: recipient,
         letter_type_id: letter_type,
-        letter_date: new Date(),
-        Signature: {
-          create: newDepartmentIds.map((id: number) => ({
-            department: {
-              connect: { department_id: id },
-            },
-          })),
-        },
       },
     });
 

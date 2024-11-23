@@ -35,7 +35,11 @@ import {
   getDepartments,
 } from "@/hooks/department/departmentAction";
 
-import { LetterData, getSpecificLetter } from "@/hooks/letter/letterAction";
+import {
+  LetterData,
+  getSpecificLetter,
+  updateLetter,
+} from "@/hooks/letter/letterAction";
 
 export default function EditLetter({ params }: { params: { id: string } }) {
   const [data, setData] = useState<LetterData>({
@@ -43,9 +47,8 @@ export default function EditLetter({ params }: { params: { id: string } }) {
     sender: "",
     subject: "",
     recipient: "",
-    letter_type: 0,
+    letter_type_id: 0,
     department_id: [],
-    login_user_department_id: 0,
   });
 
   const [departments, setDepartments] = useState<
@@ -83,17 +86,26 @@ export default function EditLetter({ params }: { params: { id: string } }) {
           sig.department_id.toString()
         );
 
+        const senderDepartment = departments.find(
+          (dept) => dept.label === letterData.sender
+        );
+
         setData({
-          ...letterData,
-          letter_type: letterData.letter_type_id,
+          letter_id: letterData.letter_id,
+          sender: senderDepartment ? senderDepartment.label : "",
+          subject: letterData.subject,
+          recipient: letterData.recipient,
+          letter_type_id: letterData.letter_type_id,
           department_id: departmentIds,
         });
       } else {
         console.error("Failed to fetch letter:", res.message);
       }
     };
-    fetchLetter();
-  }, [data.letter_id]);
+    if (departments.length > 0) {
+      fetchLetter();
+    }
+  }, [data.letter_id, departments]);
 
   const Letter_Type: Record<number, string> = {
     1: "Internal",
@@ -113,7 +125,7 @@ export default function EditLetter({ params }: { params: { id: string } }) {
   const handleSelectChange = (value: string) => {
     setData((prevData) => ({
       ...prevData,
-      letter_type: parseInt(value, 10),
+      letter_type_id: parseInt(value, 10),
     }));
   };
 
@@ -125,10 +137,12 @@ export default function EditLetter({ params }: { params: { id: string } }) {
   };
 
   const handleDepartmentChange = (selected: string[]) => {
-    setData((prevData) => ({
-      ...prevData,
-      department_id: selected.map((id) => parseInt(id, 10)),
-    }));
+    setData((prevData) => {
+      return {
+        ...prevData,
+        department_id: selected.map((id) => parseInt(id, 10)),
+      };
+    });
   };
 
   const validateForm = () => {
@@ -136,9 +150,11 @@ export default function EditLetter({ params }: { params: { id: string } }) {
     if (!data.letter_id) newErrors.letter_id = "Letter ID is required.";
     if (!data.recipient) newErrors.recipient = "Recipient is required.";
     if (!data.sender) newErrors.sender = "Sender name is required.";
-    if (data.letter_type === 0)
+    if (data.letter_type_id === 0)
       newErrors.letter_type = "Letter type is required.";
     if (!data.subject) newErrors.subject = "Subject is required.";
+    if (data.department_id.length === 0)
+      newErrors.department_id = "At least one department is required.";
 
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0)
@@ -155,36 +171,33 @@ export default function EditLetter({ params }: { params: { id: string } }) {
     if (!validateForm()) return;
 
     setLoading(true);
-    // const response = await addLetter(data);
-    setLoading(false);
+    try {
+      const response = await updateLetter(data);
 
-    // if (response.success) {
-    //   toast({
-    //     variant: "success",
-    //     title: "Letter Added",
-    //     description: "The letter was successfully added.",
-    //   });
-    //   setData({
-    //     letter_id: "",
-    //     letter_date: "",
-    //     letter_type_id: 0,
-    //     sender: "",
-    //     subject: "",
-    //     recipient: "",
-    //     status: "",
-    //     Signature: [],
-    //   });
-    //   router.push("/letter/");
-    // } else {
-    //   toast({
-    //     variant: "destructive",
-    //     title: "Error",
-    //     description: response.message,
-    //   });
-    // }
+      if (response.status) {
+        toast({
+          variant: "success",
+          title: "Letter Updated",
+          description: "The letter was successfully updated.",
+        });
+        router.push("/letter/");
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: response.message,
+        });
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "An unexpected error occurred",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
-
-  console.log(data);
 
   return (
     <div className="mb-10">
@@ -244,11 +257,16 @@ export default function EditLetter({ params }: { params: { id: string } }) {
                     errors.sender ? "border-red-500" : "border-gray-300"
                   } focus:border-blue-500 focus:outline-none`}
                 >
-                  <SelectValue placeholder="Select Sender of the Letter" />
+                  <SelectValue placeholder="Select Sender of the Letter">
+                    {
+                      departments.find((dept) => dept.value === data.sender)
+                        ?.label
+                    }
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {departments.map((dept) => (
-                    <SelectItem key={dept.value} value={dept.value}>
+                    <SelectItem key={dept.value} value={dept.label}>
                       {dept.label}
                     </SelectItem>
                   ))}
@@ -284,14 +302,16 @@ export default function EditLetter({ params }: { params: { id: string } }) {
               </Label>
               <Select
                 onValueChange={handleSelectChange}
-                value={String(data.letter_type)}
+                value={data.letter_type_id.toString()}
               >
                 <SelectTrigger
                   className={`mt-[6px] h-10 border ${
                     errors.letter_type ? "border-red-500" : "border-gray-300"
                   } focus:border-blue-500 focus:outline-none`}
                 >
-                  <SelectValue placeholder="Select Letter Type" />
+                  <SelectValue placeholder="Select Letter Type">
+                    {Letter_Type[data.letter_type_id]}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {Object.entries(Letter_Type).map(([key, value]) => (
@@ -309,18 +329,20 @@ export default function EditLetter({ params }: { params: { id: string } }) {
               <Label htmlFor="department_id">
                 Department <span className="text-red-500">*</span>
               </Label>
-              <MultiSelect
-                className={`mt-1 h-10 border ${
-                  errors.department_id ? "border-red-500" : "border-gray-300"
-                } focus:border-blue-500 focus:outline-none`}
-                options={departments}
-                onValueChange={handleDepartmentChange}
-                defaultValue={data.department_id.map(String)}
-                placeholder="Select Department"
-                variant="inverted"
-                animation={2}
-                maxCount={3}
-              />
+              {data.department_id.length > 0 && (
+                <MultiSelect
+                  className={`mt-1 h-10 border ${
+                    errors.department_id ? "border-red-500" : "border-gray-300"
+                  } focus:border-blue-500 focus:outline-none`}
+                  options={departments}
+                  onValueChange={handleDepartmentChange}
+                  defaultValue={data.department_id.map(String)}
+                  placeholder="Select Department"
+                  variant="inverted"
+                  animation={2}
+                  maxCount={3}
+                />
+              )}
               {errors.department_id && (
                 <p className="text-red-500 text-sm">{errors.department_id}</p>
               )}

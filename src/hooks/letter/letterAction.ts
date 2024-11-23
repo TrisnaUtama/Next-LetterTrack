@@ -36,7 +36,7 @@ export interface LetterData {
   sender: string;
   subject: string;
   recipient: string;
-  letter_type: number;
+  letter_type_id: number;
   department_id: number[];
   login_user_department_id?: number;
 }
@@ -44,7 +44,7 @@ export interface LetterData {
 export interface LetterChart {
   letter_type_id: number;
   letter_date: string;
-  status:string;
+  status: string;
   signature: {
     signed_date: string;
     status: string;
@@ -190,6 +190,14 @@ export async function updateLetter(data: LetterData) {
     };
   }
   const token = cookiesParsed.token;
+
+  const updatedData = {
+    ...data,
+    department_id: data.department_id.map((id) => Number(id)),
+  };
+
+  console.log("data in hooks : ", updatedData);
+
   try {
     const res = await fetch(`${process.env.ROOT_URL}/api/letter`, {
       method: "PATCH",
@@ -197,14 +205,14 @@ export async function updateLetter(data: LetterData) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify(updatedData),
     });
 
     if (!res.ok) {
       const errorData = await res.json();
       console.error("Error response:", errorData);
       return {
-        success: false,
+        status: false,
         message: errorData.message || `HTTP error! status: ${res.status}`,
       };
     }
@@ -212,7 +220,7 @@ export async function updateLetter(data: LetterData) {
     const responseData = await res.json();
 
     return {
-      success: true,
+      status: true,
       data: responseData.data,
     };
   } catch (error: any) {

@@ -43,12 +43,10 @@ export default function AddLetter({ params }: { params: { id: number } }) {
     sender: "",
     subject: "",
     recipient: "",
-    letter_type: 0,
+    letter_type_id: 0,
     department_id: [params.id],
     login_user_department_id: 0,
   });
-
-  
 
   const [departments, setDepartments] = useState<
     { label: string; value: string }[]
@@ -116,7 +114,7 @@ export default function AddLetter({ params }: { params: { id: number } }) {
     if (!data.letter_id) newErrors.letter_id = "Letter ID is required.";
     if (!data.recipient) newErrors.recipient = "Recipient is required.";
     if (!data.sender) newErrors.sender = "Sender name is required.";
-    if (data.letter_type === 0)
+    if (data.letter_type_id === 0)
       newErrors.letter_type = "Letter type is required.";
     if (!data.subject) newErrors.subject = "Subject is required.";
     if (data.department_id.length === 0)
@@ -151,7 +149,7 @@ export default function AddLetter({ params }: { params: { id: number } }) {
         sender: "",
         subject: "",
         recipient: "",
-        letter_type: 0,
+        letter_type_id: 0,
         department_id: [],
         login_user_department_id: 0,
       });
@@ -170,7 +168,8 @@ export default function AddLetter({ params }: { params: { id: number } }) {
       <div className="bg-white border-b-2 p-8">
         <Link
           href="/letter"
-          className="inline-block cursor-pointer hover:text-black/70">
+          className="inline-block cursor-pointer hover:text-black/70"
+        >
           <div className="flex items-center space-x-1">
             <ArrowDown className="rotate-90 w-4" />
             <p className="text-sm">Back</p>
@@ -192,7 +191,9 @@ export default function AddLetter({ params }: { params: { id: number } }) {
           <p className="text-sm">Please provide all of the form needs.</p>
           <div className="grid grid-cols-3 mt-4 space-x-10">
             <div>
-              <Label htmlFor="letter_id">Letter Id <span className="text-red-500">*</span></Label>
+              <Label htmlFor="letter_id">
+                Letter Id <span className="text-red-500">*</span>
+              </Label>
               <Input
                 type="text"
                 id="letter_id"
@@ -208,12 +209,15 @@ export default function AddLetter({ params }: { params: { id: number } }) {
               )}
             </div>
             <div>
-              <Label htmlFor="sender">Sender <span className="text-red-500">*</span></Label>
+              <Label htmlFor="sender">
+                Sender <span className="text-red-500">*</span>
+              </Label>
               <Select onValueChange={handleSelectChangeDepartmentSender}>
                 <SelectTrigger
                   className={`mt-[1px] h-10 border ${
                     errors.sender ? "border-red-500" : "border-gray-300"
-                  } focus:border-blue-500 focus:outline-none`}>
+                  } focus:border-blue-500 focus:outline-none`}
+                >
                   <SelectValue placeholder="Select Sender of the Letter" />
                 </SelectTrigger>
                 <SelectContent>
@@ -221,7 +225,8 @@ export default function AddLetter({ params }: { params: { id: number } }) {
                     <SelectItem
                       disabled={value.value === params.id.toString()}
                       key={value.value}
-                      value={value.label}>
+                      value={value.label}
+                    >
                       {value.label}
                     </SelectItem>
                   ))}
@@ -232,7 +237,9 @@ export default function AddLetter({ params }: { params: { id: number } }) {
               )}
             </div>
             <div>
-              <Label htmlFor="recipient">Recipient <span className="text-red-500">*</span></Label>
+              <Label htmlFor="recipient">
+                Recipient <span className="text-red-500">*</span>
+              </Label>
               <Input
                 type="text"
                 id="recipient"
@@ -250,12 +257,15 @@ export default function AddLetter({ params }: { params: { id: number } }) {
           </div>
           <div className="grid grid-cols-2 mt-4 space-x-10">
             <div>
-              <Label htmlFor="letter_type">Letter Type <span className="text-red-500">*</span></Label>
+              <Label htmlFor="letter_type">
+                Letter Type <span className="text-red-500">*</span>
+              </Label>
               <Select onValueChange={handleSelectChange}>
                 <SelectTrigger
                   className={`mt-[6px] h-10 border ${
                     errors.letter_type ? "border-red-500" : "border-gray-300"
-                  } focus:border-blue-500 focus:outline-none`}>
+                  } focus:border-blue-500 focus:outline-none`}
+                >
                   <SelectValue placeholder="Select Letter Type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -271,7 +281,9 @@ export default function AddLetter({ params }: { params: { id: number } }) {
               )}
             </div>
             <div className="mt-0.5">
-              <Label htmlFor="department_id">Department <span className="text-red-500">*</span></Label>
+              <Label htmlFor="department_id">
+                Department <span className="text-red-500">*</span>
+              </Label>
               <MultiSelect
                 className={`mt-1 h-10 border ${
                   errors.department_id ? "border-red-500" : "border-gray-300"
@@ -291,7 +303,9 @@ export default function AddLetter({ params }: { params: { id: number } }) {
           </div>
           <div className="grid mt-4 space-x-10">
             <div>
-              <Label htmlFor="subject">Subject <span className="text-red-500">*</span></Label>
+              <Label htmlFor="subject">
+                Subject <span className="text-red-500">*</span>
+              </Label>
               <Textarea
                 id="subject"
                 placeholder="enter the letter Subject"
@@ -312,7 +326,8 @@ export default function AddLetter({ params }: { params: { id: number } }) {
             <AlertDialogTrigger asChild>
               <Button
                 onClick={validateForm}
-                className="mt-5 bg-gradient-to-r from-[#01557B] to-[#019BE1] p-2 rounded-lg text-white font-semibold text-sm hover:from-[#01547be2] hover:to-[#019ae1dc]">
+                className="mt-5 bg-gradient-to-r from-[#01557B] to-[#019BE1] p-2 rounded-lg text-white font-semibold text-sm hover:from-[#01547be2] hover:to-[#019ae1dc]"
+              >
                 Submit
               </Button>
             </AlertDialogTrigger>
@@ -330,7 +345,8 @@ export default function AddLetter({ params }: { params: { id: number } }) {
                   <Button
                     type="button"
                     onClick={handleSubmit}
-                    disabled={loading}>
+                    disabled={loading}
+                  >
                     {loading ? <span>Loading...</span> : "Continue"}
                   </Button>
                 </AlertDialogFooter>
