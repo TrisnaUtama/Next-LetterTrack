@@ -1,12 +1,24 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import { verifyToken } from "@/lib/validationToken";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
-
   const departmentId = searchParams.get("departmentId");
+  const tokenResponse = await verifyToken(request);
+
+  if (tokenResponse instanceof NextResponse) {
+    return tokenResponse;
+  }
+
+  if (!tokenResponse.success) {
+    return NextResponse.json(
+      { message: "Unauthorized access" },
+      { status: 401 }
+    );
+  }
   if (!departmentId || isNaN(Number(departmentId))) {
     return NextResponse.json(
       { message: "Invalid department ID" },
@@ -89,6 +101,17 @@ export async function POST(request: NextRequest) {
     department_id,
     login_user_department_id,
   } = await request.json();
+  const tokenResponse = await verifyToken(request);
+  if (tokenResponse instanceof NextResponse) {
+    return tokenResponse;
+  }
+
+  if (!tokenResponse.success) {
+    return NextResponse.json(
+      { message: "Unauthorized access" },
+      { status: 401 }
+    );
+  }
 
   const existLetter = await prisma.letter.findUnique({
     where: {
@@ -153,6 +176,19 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   const { letter_id, sender, subject, recipient, letter_type, department_id } =
     await request.json();
+
+  const tokenResponse = await verifyToken(request);
+
+  if (tokenResponse instanceof NextResponse) {
+    return tokenResponse;
+  }
+
+  if (!tokenResponse.success) {
+    return NextResponse.json(
+      { message: "Unauthorized access" },
+      { status: 401 }
+    );
+  }
 
   if (!letter_id)
     return NextResponse.json({

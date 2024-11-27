@@ -1,10 +1,24 @@
 import prisma from "@/lib/prisma";
+import { verifyToken } from "@/lib/validationToken";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
-
   const letter_id = searchParams.get("letter_id");
+
+  const tokenResponse = await verifyToken(request);
+
+  if (tokenResponse instanceof NextResponse) {
+    return tokenResponse;
+  }
+
+  if (!tokenResponse.success) {
+    return NextResponse.json(
+      { message: "Unauthorized access" },
+      { status: 401 }
+    );
+  }
+
   if (!letter_id || letter_id.length <= 0)
     return NextResponse.json(
       { message: "Invalid department ID" },
@@ -64,6 +78,19 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   const { descriptions, signature_id, letter_id, department_id } =
     await request.json();
+
+  const tokenResponse = await verifyToken(request);
+
+  if (tokenResponse instanceof NextResponse) {
+    return tokenResponse;
+  }
+
+  if (!tokenResponse.success) {
+    return NextResponse.json(
+      { message: "Unauthorized access" },
+      { status: 401 }
+    );
+  }
 
   if (!signature_id || !letter_id) {
     return NextResponse.json(

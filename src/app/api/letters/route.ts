@@ -1,8 +1,21 @@
 "use server";
 import prisma from "@/lib/prisma";
+import { verifyToken } from "@/lib/validationToken";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
+  const tokenResponse = await verifyToken(request);
+
+  if (tokenResponse instanceof NextResponse) {
+    return tokenResponse;
+  }
+
+  if (!tokenResponse.success) {
+    return NextResponse.json(
+      { message: "Unauthorized access" },
+      { status: 401 }
+    );
+  }
   try {
     const data = await prisma.letter.findMany({
       select: {

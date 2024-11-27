@@ -1,7 +1,21 @@
 import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
+import { verifyToken } from "@/lib/validationToken";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const tokenResponse = await verifyToken(request);
+
+  if (tokenResponse instanceof NextResponse) {
+    return tokenResponse;
+  }
+
+  if (!tokenResponse.success) {
+    return NextResponse.json(
+      { message: "Unauthorized access" },
+      { status: 401 }
+    );
+  }
+
   try {
     const data = await prisma.department.findMany();
     if (!data || data.length === 0)
@@ -26,6 +40,18 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const { department_name, department_head } = await request.json();
+  const tokenResponse = await verifyToken(request);
+
+  if (tokenResponse instanceof NextResponse) {
+    return tokenResponse;
+  }
+
+  if (!tokenResponse.success) {
+    return NextResponse.json(
+      { message: "Unauthorized access" },
+      { status: 401 }
+    );
+  }
   try {
     if (!department_name)
       return NextResponse.json(
@@ -93,15 +119,27 @@ export async function PATCH(request: NextRequest) {
       { status: 400 }
     );
   }
+  const tokenResponse = await verifyToken(request);
+
+  if (tokenResponse instanceof NextResponse) {
+    return tokenResponse;
+  }
+
+  if (!tokenResponse.success) {
+    return NextResponse.json(
+      { message: "Unauthorized access" },
+      { status: 401 }
+    );
+  }
   try {
     const existingDepartment = await prisma.department.findUnique({
-      where: { department_id },
+      where: { department_name },
     });
 
-    if (!existingDepartment) {
+    if (existingDepartment) {
       return NextResponse.json(
-        { message: "Department not found." },
-        { status: 404 }
+        { message: "Department already exists." },
+        { status: 409 }
       );
     }
     if (!department_name)
@@ -123,7 +161,6 @@ export async function PATCH(request: NextRequest) {
           status: 400,
         }
       );
-    const departments = await prisma.department.findMany();
 
     const updatedDepartments = await prisma.department.update({
       where: { department_id },
@@ -152,6 +189,18 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   const { department_id } = await request.json();
+  const tokenResponse = await verifyToken(request);
+
+  if (tokenResponse instanceof NextResponse) {
+    return tokenResponse;
+  }
+
+  if (!tokenResponse.success) {
+    return NextResponse.json(
+      { message: "Unauthorized access" },
+      { status: 401 }
+    );
+  }
   try {
     const deletedDepartment = await prisma.department.delete({
       where: {

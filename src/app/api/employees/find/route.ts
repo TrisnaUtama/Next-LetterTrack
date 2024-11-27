@@ -1,15 +1,28 @@
 import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
+import { verifyToken } from "@/lib/validationToken";
 
 export async function GET(request: NextRequest) {
   const employee_id = request.nextUrl.searchParams.get("employee_id");
+  const tokenResponse = await verifyToken(request);
+
+  if (tokenResponse instanceof NextResponse) {
+    return tokenResponse;
+  }
+
+  if (!tokenResponse.success) {
+    return NextResponse.json(
+      { message: "Unauthorized access" },
+      { status: 401 }
+    );
+  }
+
   if (!employee_id) {
     return NextResponse.json(
       { message: "Employee ID is required." },
       { status: 400 }
     );
   }
-
 
   try {
     const findEmployee = await prisma.employee.findUnique({

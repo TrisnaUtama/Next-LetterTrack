@@ -5,12 +5,7 @@ import { cookies } from "next/headers";
 export interface Department {
   department_id: number;
   department_name: string;
-  department_head: string;
-}
-
-export interface AddDepartment {
-  department_name: string;
-  department_head: string;
+  department_head?: string;
 }
 
 interface GetDepartmentsResponse {
@@ -69,13 +64,16 @@ export async function findDepartment(id: number) {
   const token = tokenParsed.token;
 
   try {
-    const res = await fetch(`${process.env.ROOT_URL}/api/department/?department_id=${id}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const res = await fetch(
+      `${process.env.ROOT_URL}/api/department/?department_id=${id}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
     if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
 
@@ -94,7 +92,7 @@ export async function findDepartment(id: number) {
   }
 }
 
-export async function addDepartment(data: AddDepartment) {
+export async function addDepartment(data: Department) {
   if (!tokenParsed)
     return {
       status: false,
@@ -131,7 +129,7 @@ export async function addDepartment(data: AddDepartment) {
   }
 }
 
-export async function updateDepartment(data: AddDepartment) {
+export async function updateDepartment(data: Department) {
   if (!tokenParsed)
     return {
       status: false,

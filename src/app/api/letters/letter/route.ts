@@ -1,10 +1,24 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import { verifyToken } from "@/lib/validationToken";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   const letter_id = request.nextUrl.searchParams.get("letter_id") ?? undefined;
+
+  const tokenResponse = await verifyToken(request);
+
+  if (tokenResponse instanceof NextResponse) {
+    return tokenResponse;
+  }
+
+  if (!tokenResponse.success) {
+    return NextResponse.json(
+      { message: "Unauthorized access" },
+      { status: 401 }
+    );
+  }
 
   if (!letter_id)
     NextResponse.json({
