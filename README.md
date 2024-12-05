@@ -34,6 +34,8 @@ datasource db {
 }
 ```
 
+and then you can change the JWT_SECRET and the ROOT_URL 
+
 run the development server:
 
 ```bash
