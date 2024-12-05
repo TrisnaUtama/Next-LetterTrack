@@ -1,6 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyToken } from "@/lib/validationToken";
+import hashPassword from "@/utils/hashedPassword";
 
 export async function GET(request: NextRequest) {
   const tokenResponse = await verifyToken(request);
@@ -63,6 +64,7 @@ export async function PATCH(request: NextRequest) {
     gender,
     department_id,
     employee_type_id,
+    password,
   } = await request.json();
 
   if (!employee_id) {
@@ -94,6 +96,7 @@ export async function PATCH(request: NextRequest) {
         gender: gender,
         employee_type_id: employee_type_id,
         updatedAt: new Date(),
+        password: await hashPassword(password),
       },
     });
 

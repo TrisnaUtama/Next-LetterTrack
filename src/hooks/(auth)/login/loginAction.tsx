@@ -21,12 +21,9 @@ export interface Employee {
 }
 
 export default async function loginAction(
-  prevState: LoginResult,
-  formData: FormData
+  username: string,
+  password: string
 ): Promise<LoginResult> {
-  const username = formData.get("username");
-  const password = formData.get("password");
-
   if (!username || !password) {
     return { success: false, error: "Username and password are required" };
   }

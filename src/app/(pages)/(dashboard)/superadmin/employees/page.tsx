@@ -388,6 +388,7 @@ export default function EnhancedDataTable() {
           </select>
         </div>
       </div>
+
       {/* table section*/}
       <div className="rounded-md border">
         <Table>

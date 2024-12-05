@@ -44,8 +44,8 @@ export default function AddLetter({ params }: { params: { id: number } }) {
     subject: "",
     recipient: "",
     letter_type_id: 0,
-    department_id: [params.id],
-    login_user_department_id: 0,
+    department_id: [Number(params.id)],
+    login_user_department_id: params.id,
   });
 
   const [departments, setDepartments] = useState<
@@ -91,7 +91,7 @@ export default function AddLetter({ params }: { params: { id: number } }) {
   const handleSelectChange = (value: string) => {
     setData((prevData) => ({
       ...prevData,
-      letter_type: parseInt(value, 10),
+      letter_type_id: parseInt(value, 10),
     }));
   };
 
@@ -163,6 +163,7 @@ export default function AddLetter({ params }: { params: { id: number } }) {
     }
   };
 
+  console.log(data);
   return (
     <div className="mb-10">
       <div className="bg-white border-b-2 p-8">

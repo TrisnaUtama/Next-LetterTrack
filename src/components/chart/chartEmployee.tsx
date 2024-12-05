@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { TrendingUp } from "lucide-react";
+import { Printer } from "lucide-react";
 import { Label, Pie, PieChart, Cell, ResponsiveContainer } from "recharts"; // Import Cell
 
 import {
@@ -24,6 +24,7 @@ import {
   Employee,
   FetchEmployeesResult,
 } from "@/hooks/employee/employeesAction";
+import { Button } from "../ui/button";
 
 const chartConfig = {
   male: {
@@ -150,9 +151,6 @@ export default function ChartEmployee() {
         </ChartContainer>
       </CardContent>
       <CardFooter className="flex-col gap-2 text-sm">
-        <div className="flex items-center gap-2 font-medium leading-none">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-        </div>
         <div className="leading-none text-muted-foreground">
           Showing total employees for Angkasa Pura I
         </div>

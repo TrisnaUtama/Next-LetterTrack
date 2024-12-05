@@ -7,6 +7,7 @@ const tokenParsed = JSON.parse(userCookies!.value);
 
 export type Employee = {
   employee_id: string;
+  password: string;
   employee_name: string;
   gender: string;
   birth: string;

@@ -116,6 +116,8 @@ export default function Page() {
       gender,
     };
 
+    
+
     setIsSubmitting(true);
     const result = await RegisterEmployee(employeeData);
     setIsSubmitting(false);
@@ -137,7 +139,8 @@ export default function Page() {
       <div className="bg-white border-b-2 p-8">
         <Link
           href="/superadmin/employees"
-          className="inline-block cursor-pointer hover:text-black/70">
+          className="inline-block cursor-pointer hover:text-black/70"
+        >
           <div className="flex items-center space-x-1">
             <ArrowDown className="rotate-90 w-4" />
             <p className="text-sm">Back</p>
@@ -155,12 +158,13 @@ export default function Page() {
           <hr className="border-spacing-1 mb-2" />
           <h1 className="font-semibold text-xl">General Information</h1>
           <p className="text-sm">
-            Please provide employee Name, Date of Birth (DD/MM/YYYY), Gender and
-            Password.
+            Please provide employee Name, DOB (DD/MM/YYYY), Gender and Password.
           </p>
           <div className="grid grid-cols-3 mt-4 space-x-10">
             <div>
-              <Label htmlFor="employee_name">Employee Name <span className="text-red-500">*</span></Label>
+              <Label htmlFor="employee_name">
+                Employee Name <span className="text-red-500">*</span>
+              </Label>
               <Input
                 value={employeeName}
                 onChange={(e) => setEmployeeName(e.target.value)}
@@ -176,7 +180,9 @@ export default function Page() {
               )}
             </div>
             <div>
-              <Label htmlFor="birth">Date of Birth <span className="text-red-500">*</span></Label>
+              <Label htmlFor="birth">
+                Date of Birth <span className="text-red-500">*</span>
+              </Label>
               <Input
                 type="date"
                 id="birth"
@@ -191,12 +197,16 @@ export default function Page() {
               )}
             </div>
             <div>
-              <Label htmlFor="employee_gender">Gender <span className="text-red-500">*</span></Label>
+              <Label htmlFor="employee_gender">
+                Gender <span className="text-red-500">*</span>
+              </Label>
               <Select value={gender} onValueChange={setGender}>
                 <SelectTrigger
+                  id="employee_gender"
                   className={`h-10 border ${
                     errors.gender ? "border-red-500" : "border-gray-300"
-                  } focus:border-blue-500 focus:outline-none`}>
+                  } focus:border-blue-500 focus:outline-none`}
+                >
                   <SelectValue placeholder="Select Gender" />
                 </SelectTrigger>
                 <SelectContent>
@@ -211,7 +221,9 @@ export default function Page() {
           </div>
           <div className="grid grid-cols-2">
             <div className="relative">
-              <Label htmlFor="password">Password <span className="text-red-500">*</span></Label>
+              <Label htmlFor="password">
+                Password <span className="text-red-500">*</span>
+              </Label>
               <div className="flex items-center">
                 <Input
                   type={showPassword ? "text" : "password"}
@@ -225,7 +237,8 @@ export default function Page() {
                 />
                 <span
                   className="absolute right-3 cursor-pointer text-gray-500"
-                  onClick={togglePasswordVisibility}>
+                  onClick={togglePasswordVisibility}
+                >
                   <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
                 </span>
               </div>
@@ -244,7 +257,9 @@ export default function Page() {
           </p>
           <div className="grid grid-cols-3 mt-4 space-x-10">
             <div>
-              <Label htmlFor="address">Address <span className="text-red-500">*</span></Label>
+              <Label htmlFor="address">
+                Address <span className="text-red-500">*</span>
+              </Label>
               <Input
                 value={addressEmployee}
                 onChange={(e) => setAddressEmployee(e.target.value)}
@@ -260,7 +275,9 @@ export default function Page() {
               )}
             </div>
             <div>
-              <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
+              <Label htmlFor="email">
+                Email <span className="text-red-500">*</span>
+              </Label>
               <Input
                 value={emailEmployee}
                 onChange={(e) => setEmailEmployee(e.target.value)}
@@ -276,7 +293,9 @@ export default function Page() {
               )}
             </div>
             <div>
-              <Label htmlFor="phonenumber">Phone Number <span className="text-red-500">*</span></Label>
+              <Label htmlFor="phonenumber">
+                Phone Number <span className="text-red-500">*</span>
+              </Label>
               <Input
                 value={phoneNumberEmployee}
                 onChange={(e) => setPhoneNumberEmployee(e.target.value)}
@@ -294,21 +313,27 @@ export default function Page() {
           </div>
           <div className="grid grid-cols-2 space-x-5 mt-3">
             <div>
-              <Label htmlFor="department">Department <span className="text-red-500">*</span></Label>
+              <Label htmlFor="department">
+                Department <span className="text-red-500">*</span>
+              </Label>
               <Select
                 value={selectedDepartment?.toString() || ""}
-                onValueChange={(value) => setSelectedDepartment(Number(value))}>
+                onValueChange={(value) => setSelectedDepartment(Number(value))}
+              >
                 <SelectTrigger
+                  id="department"
                   className={`mt-[6px] h-10 border ${
                     errors.department ? "border-red-500" : "border-gray-300"
-                  } focus:border-blue-500 focus:outline-none`}>
+                  } focus:border-blue-500 focus:outline-none`}
+                >
                   <SelectValue placeholder="Select Department" />
                 </SelectTrigger>
                 <SelectContent>
                   {department.map((value) => (
                     <SelectItem
                       key={value.department_id}
-                      value={value.department_id.toString()}>
+                      value={value.department_id.toString()}
+                    >
                       {value.department_name}
                     </SelectItem>
                   ))}
@@ -319,12 +344,16 @@ export default function Page() {
               )}
             </div>
             <div>
-              <Label htmlFor="employee_type">Employee Type <span className="text-red-500">*</span></Label>
+              <Label htmlFor="employee_type">
+                Employee Type <span className="text-red-500">*</span>
+              </Label>
               <Select value={employeeType} onValueChange={setEmployeeType}>
                 <SelectTrigger
+                  id="employee_type"
                   className={`mt-[6px] h-10 border ${
                     errors.employeeType ? "border-red-500" : "border-gray-300"
-                  } focus:border-blue-500 focus:outline-none`}>
+                  } focus:border-blue-500 focus:outline-none`}
+                >
                   <SelectValue placeholder="Select Employee Type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -347,7 +376,8 @@ export default function Page() {
               <Button
                 onClick={handleCheckedFormField}
                 disabled={isSubmitting}
-                className="mt-5 bg-gradient-to-r from-[#01557B] to-[#019BE1] p-2 rounded-lg text-white font-semibold text-sm hover:from-[#01547be2] hover:to-[#019ae1dc]">
+                className="mt-5 bg-gradient-to-r from-[#01557B] to-[#019BE1] p-2 rounded-lg text-white font-semibold text-sm hover:from-[#01547be2] hover:to-[#019ae1dc]"
+              >
                 Submit
               </Button>
             </AlertDialogTrigger>
@@ -365,7 +395,8 @@ export default function Page() {
                   <Button
                     type="button"
                     onClick={handleSubmit}
-                    disabled={isSubmitting}>
+                    disabled={isSubmitting}
+                  >
                     {isSubmitting ? "Loading..." : "Continue"}
                   </Button>
                 </AlertDialogFooter>

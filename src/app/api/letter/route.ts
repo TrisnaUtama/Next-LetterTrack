@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
     sender,
     subject,
     recipient,
-    letter_type,
+    letter_type_id,
     department_id,
     login_user_department_id,
   } = await request.json();
@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
         sender: sender,
         subject: subject,
         recipient: recipient,
-        letter_type_id: letter_type,
+        letter_type_id: letter_type_id,
         letter_date: new Date(),
         Signature: {
           create: department_id.map((id: Number) => ({

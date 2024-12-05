@@ -42,6 +42,7 @@ import {
   Mail,
   CheckCircle2,
   XCircle,
+  CloudFog,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import LetterDetailDialog from "@/components/LetterDetailDialog/Dialog";
@@ -289,6 +290,7 @@ export default function EnhancedDataTable() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
+                id="action"
                 variant="ghost"
                 className="h-8 w-8 p-0 hover:bg-gray-100 transition-colors duration-200"
               >
@@ -301,6 +303,7 @@ export default function EnhancedDataTable() {
                 Actions
               </DropdownMenuLabel>
               <DropdownMenuItem
+                id="copy-letter"
                 className="flex justify-center cursor-pointer hover:bg-gray-100 transition-colors duration-200"
                 onClick={() => {
                   navigator.clipboard.writeText(letter.letter_id);
@@ -319,6 +322,7 @@ export default function EnhancedDataTable() {
                   <div>
                     <DropdownMenuSeparator />
                     <Link
+                      id="edit"
                       href={`/letter/${letter.letter_id}/edit`}
                       className="flex justify-center cursor-pointer hover:bg-gray-100 transition-colors duration-200 text-sm p-1.5 rounded-md"
                     >
@@ -331,6 +335,7 @@ export default function EnhancedDataTable() {
                 <div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
+                    id="signed"
                     onClick={() => setIsOpen(true)}
                     className="flex justify-center cursor-pointer hover:bg-gray-100 transition-colors duration-200"
                     disabled={
@@ -348,7 +353,8 @@ export default function EnhancedDataTable() {
 
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                className="felx justify-center"
+                id="detail"
+                className="flex justify-center"
                 onSelect={() => setDetailLetterOpen(true)}
               >
                 Detail Letter
@@ -477,6 +483,7 @@ export default function EnhancedDataTable() {
 
         <div className="flex items-center space-x-4">
           <select
+            id="status"
             value={letterStatus}
             onChange={(e) => {
               const status = e.target.value;

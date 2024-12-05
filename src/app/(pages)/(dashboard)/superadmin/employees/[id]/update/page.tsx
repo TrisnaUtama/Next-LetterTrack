@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Type } from "@/app/(pages)/(dashboard)/superadmin/employees/page";
 import { ArrowDown, Loader2 } from "lucide-react";
+import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import Link from "next/link";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -32,6 +33,7 @@ import {
   getDepartments,
   Department,
 } from "@/hooks/department/departmentAction";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export default function Page({ params }: { params: { id: string } }) {
   const [employee, setEmployee] = useState<Employee | null>(null);
@@ -42,6 +44,8 @@ export default function Page({ params }: { params: { id: string } }) {
   const [dateOfBirth, setDateOfBirth] = useState<string>("");
   const [gender, setGender] = useState("");
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [showPassword, setShowPassword] = useState(false);
+  const [password, setPassword] = useState<string>("");
   const [selectedDepartment, setSelectedDepartment] = useState<number | null>(
     null
   );
@@ -52,6 +56,10 @@ export default function Page({ params }: { params: { id: string } }) {
   const [loading, setLoading] = useState(true);
   const id = params.id;
   const { toast } = useToast();
+
+  const togglePasswordVisibility = () => {
+    setShowPassword((show) => !show);
+  };
 
   const employee_Type: Record<Type, string> = {
     1: "Superadmin",
@@ -103,6 +111,7 @@ export default function Page({ params }: { params: { id: string } }) {
           setEmailEmployee(res.data.email);
           setDateOfBirth(res.data.birth);
           setGender(res.data.gender);
+          setPassword(res.data.password);
           setEmployeeType(res.data.employee_type_id.toString());
         } else {
           console.error(res.message);
@@ -130,6 +139,7 @@ export default function Page({ params }: { params: { id: string } }) {
       employee_type_id:
         Number(employeeType) || Number(employee!.employee_type_id),
       gender: gender || employee!.gender,
+      password: password || employee?.password,
     };
 
     const updateResult = await updateAction(id, dataUpdated);
@@ -170,7 +180,8 @@ export default function Page({ params }: { params: { id: string } }) {
       <div className="bg-white border-b-2 p-8">
         <Link
           href="/superadmin/employees"
-          className="inline-block cursor-pointer hover:text-black/70">
+          className="inline-block cursor-pointer hover:text-black/70"
+        >
           <div className="flex items-center space-x-1">
             <ArrowDown className="rotate-90 w-4" />
             <p className="text-sm">Back</p>
@@ -214,7 +225,10 @@ export default function Page({ params }: { params: { id: string } }) {
             <div>
               <Label htmlFor="employee_gender">Gender</Label>
               <Select value={gender} onValueChange={setGender} required>
-                <SelectTrigger className="mt-[6px] border border-gray-300 focus:border-blue-500 focus:outline-none">
+                <SelectTrigger
+                  id="employee_gender"
+                  className="mt-[6px] border border-gray-300 focus:border-blue-500 focus:outline-none"
+                >
                   <SelectValue placeholder={employee.gender} />
                 </SelectTrigger>
                 <SelectContent>
@@ -222,6 +236,30 @@ export default function Page({ params }: { params: { id: string } }) {
                   <SelectItem value="FEMALE">Female</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2">
+            <div className="relative">
+              <Label htmlFor="password">
+                Password <span className="text-red-500">*</span>
+              </Label>
+              <div className="flex items-center">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  name="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  className={`mb-1 h-10 p-3 border $ focus:border-blue-500 focus:outline-none`}
+                />
+                <span
+                  className="absolute right-3 cursor-pointer text-gray-500"
+                  onClick={togglePasswordVisibility}
+                >
+                  <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -269,15 +307,20 @@ export default function Page({ params }: { params: { id: string } }) {
               <Label htmlFor="department">Department</Label>
               <Select
                 value={selectedDepartment?.toString() || ""}
-                onValueChange={(value) => setSelectedDepartment(Number(value))}>
-                <SelectTrigger className="mt-[6px] h-10 border border-gray-300 focus:border-blue-500 focus:outline-none">
+                onValueChange={(value) => setSelectedDepartment(Number(value))}
+              >
+                <SelectTrigger
+                  id="department"
+                  className="mt-[6px] h-10 border border-gray-300 focus:border-blue-500 focus:outline-none"
+                >
                   <SelectValue placeholder={matchedDepartment()} />
                 </SelectTrigger>
                 <SelectContent>
                   {departments.map((value) => (
                     <SelectItem
                       key={value.department_id}
-                      value={value.department_id.toString()}>
+                      value={value.department_id.toString()}
+                    >
                       {value.department_name}
                     </SelectItem>
                   ))}
@@ -287,7 +330,10 @@ export default function Page({ params }: { params: { id: string } }) {
             <div>
               <Label htmlFor="employee_type">Employee Type</Label>
               <Select value={employeeType} onValueChange={setEmployeeType}>
-                <SelectTrigger className="mt-[6px] h-10 border border-gray-300 focus:border-blue-500 focus:outline-none">
+                <SelectTrigger
+                  id="employee_type"
+                  className="mt-[6px] h-10 border border-gray-300 focus:border-blue-500 focus:outline-none"
+                >
                   <SelectValue placeholder={matchedEmployeeType()} />
                 </SelectTrigger>
                 <SelectContent>

@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { useFormState, useFormStatus } from "react-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import { Loader2 } from "lucide-react";
@@ -22,38 +21,38 @@ import { Input } from "@/components/ui/input";
 import Logo from "../../public/logo-angkasapura.png";
 import loginAction from "../hooks/(auth)/login/loginAction";
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button
-      type="submit"
-      disabled={pending}
-      className="mt-5 p-6 text-lg bg-[#019BE1] hover:bg-[#01557B] font-semibold w-full">
-      {pending ? (
-        <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please Wait
-        </>
-      ) : (
-        "Sign In"
-      )}
-    </Button>
-  );
-}
-
 export default function Home() {
   const [showPassword, setShowPassword] = useState(false);
-  const [state, formAction] = useFormState(loginAction, null);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   const togglePasswordVisibility = () => {
-    setShowPassword((show) => !show);
+    setShowPassword((prev) => !prev);
+  };
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const response = await loginAction(username, password);
+      if (response?.success) {
+        router.push(response.redirect || "/dashboard");
+      } else {
+        setError(response?.error || "Login failed");
+      }
+    } catch (err) {
+      console.error("Login error", err);
+      setError("An error occurred while logging in");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  useEffect(() => {
-    if (state?.success && state.redirect) {
-      router.push(state.redirect);
-    }
-  }, [state, router]);
+  useEffect(() => {}, [username, password]);
 
   return (
     <main className="flex min-h-screen flex-col bg-gradient-to-r from-[#01557B] to-[#019BE1] p-4 md:p-10">
@@ -75,35 +74,55 @@ export default function Home() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form action={formAction}>
+            <form onSubmit={handleSubmit}>
               <Label htmlFor="username">Username</Label>
               <Input
-                name="username"
-                type="text"
                 id="username"
+                type="text"
                 placeholder="Enter your username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 className="mb-4 mt-1.5 h-10 p-3 font-medium border border-gray-300 focus:border-blue-500 focus:outline-none"
+                required
               />
               <Label htmlFor="password">Password</Label>
               <div className="relative">
                 <Input
-                  type={showPassword ? "text" : "password"}
                   id="password"
-                  name="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="mt-1.5 h-10 p-3 font-medium border border-gray-300 focus:border-blue-500 focus:outline-none"
+                  required
                 />
                 <span
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer"
-                  onClick={togglePasswordVisibility}>
+                  onClick={togglePasswordVisibility}
+                >
                   <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
                 </span>
               </div>
+
+              {error && (
+                <p className="text-red-500 mt-2 text-center">{error}</p>
+              )}
+
               <div className="grid mt-5">
-                {state?.success === false && (
-                  <p className="text-red-500 mt-2 text-center">{state.error}</p>
-                )}
-                <SubmitButton />
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="mt-5 p-6 text-lg bg-[#019BE1] hover:bg-[#01557B] font-semibold w-full"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please
+                      Wait
+                    </>
+                  ) : (
+                    "Sign In"
+                  )}
+                </Button>
               </div>
             </form>
           </CardContent>
