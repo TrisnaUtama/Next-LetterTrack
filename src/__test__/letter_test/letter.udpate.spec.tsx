@@ -7,7 +7,7 @@ import {
   within,
   act,
 } from "@testing-library/react";
-import Page from "@/app/(pages)/(dashboard)/letter/[id]/add/page";
+import Page from "@/app/(pages)/(dashboard)/letter/[id]/edit/page";
 import DashboardWraper from "@/app/(pages)/(dashboard)/layout-client";
 import Dashboard from "@/app/(pages)/(dashboard)/layout";
 import { useRouter } from "next/navigation";
@@ -81,14 +81,14 @@ jest.mock("@/hooks/employee/findAction", () => ({
 }));
 
 describe("Letter Testing", () => {
-  it("should render letter page and display letters in table", async () => {
+  it("should render edit letter page and display letters the form", async () => {
     await act(async () => {
       render(
         <DashboardWraper employeeId="1" employeeTypeId={2}>
           <Dashboard>
             <Page
               params={{
-                id: 1,
+                id: "letter-01",
               }}
             />
           </Dashboard>
@@ -97,7 +97,7 @@ describe("Letter Testing", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText("Add New Letter")).toBeInTheDocument();
+      expect(screen.getByText("Edit Letter")).toBeInTheDocument();
     });
   });
 });

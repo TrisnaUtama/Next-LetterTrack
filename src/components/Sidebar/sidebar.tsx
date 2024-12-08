@@ -26,9 +26,10 @@ export default function Sidebar({
 
   return (
     <div
-      className={`fixed h-screen bg-gradient-to-r from-[#01557B] to-[#019BE1] p-5 transition-all duration-500 ${
+      className={`fixed h-screen top-0 z-50 bg-gradient-to-r from-[#01557B] to-[#019BE1] p-5 transition-all duration-500 ${
         isOpen ? `w-[20%]` : "w-[6%]"
-      }`}>
+      }`}
+    >
       <div className="flex items-center justify-center">
         <Image
           className={`transition-all duration-100 ${isOpen ? "w-20" : "w-20"}`}
@@ -49,11 +50,13 @@ export default function Sidebar({
           <Link
             key={index}
             href={data.pathname}
-            onClick={() => handleClick(data.pathname)}>
+            onClick={() => handleClick(data.pathname)}
+          >
             <div
-              className={`flex items-center p-2 rounded-lg hover:bg-white/10 transition-colors duration-200 group mt-3 ${!isOpen && 'justify-center'} ${
-                activePath === data.pathname && "bg-white/10"
-              }`}>
+              className={`flex items-center p-2 rounded-lg hover:bg-white/10 transition-colors duration-200 group mt-3 ${
+                !isOpen && "justify-center"
+              } ${activePath === data.pathname && "bg-white/10"}`}
+            >
               <div className="w-8 flex justify-center">
                 <FontAwesomeIcon
                   icon={data.icon}
@@ -63,7 +66,8 @@ export default function Sidebar({
               <span
                 className={`font-bold text-white text-sm group-hover:text-[#66B82F] transition-all duration-300 ${
                   isOpen ? "opacity-100 ml-2" : "opacity-0 w-0 overflow-hidden"
-                }`}>
+                }`}
+              >
                 {data.menu}
               </span>
             </div>

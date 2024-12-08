@@ -26,7 +26,7 @@ export default function DashboardLayoutClient({
           isOpen={handlerSidebar}
           employeeId={employeeId}
         />
-        <main className="h-screen  mb-10">{children}</main>
+        <main className="h-screen mb-10">{children}</main>
       </div>
     </div>
   );

@@ -16,7 +16,8 @@ export default function DashboardLayoutServer({
   return (
     <DashboardLayoutClient
       employeeTypeId={employeeTypeId}
-      employeeId={employeeId}>
+      employeeId={employeeId}
+    >
       {children}
     </DashboardLayoutClient>
   );

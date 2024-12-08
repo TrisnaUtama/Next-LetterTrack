@@ -80,7 +80,7 @@ export default function ChartLetter() {
   };
 
   return (
-    <Card className="h-96">
+    <Card id="data" className="h-96">
       <CardHeader>
         <CardTitle>Letter Type Chart</CardTitle>
         <CardDescription>
