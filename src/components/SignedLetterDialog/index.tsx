@@ -131,7 +131,7 @@ export default function SignLetterDialog({
         <h1 className="text-lg font-semibold text-gray-800">Sign Letter</h1>
         <p className="text-slate-500 text-sm mb-2">
           Confirmation the letter sign, fill the description and send the letter{" "}
-          into another department. Click save when you're done.
+          into another department. Click save when you&apos;re done.
         </p>
         <div className="mb-4">
           <Label htmlFor="department">Send To</Label>

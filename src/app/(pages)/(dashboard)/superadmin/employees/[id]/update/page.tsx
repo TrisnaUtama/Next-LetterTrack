@@ -32,7 +32,7 @@ import { updateAction } from "@/hooks/employee/employeesAction";
 import {
   getDepartments,
   Department,
-} from "@/hooks/department/departmentAction";
+} from "@/hooks/organizations/department_action";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export default function Page({ params }: { params: { id: string } }) {

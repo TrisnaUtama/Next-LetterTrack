@@ -1,4 +1,3 @@
-
 import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import generateEmployeeId from "@/utils/generateId";
@@ -13,6 +12,8 @@ export async function POST(request: NextRequest) {
     birth,
     gender,
     department_id,
+    division_id,
+    deputy_id,
     employee_type_id,
     password,
   } = await request.json();
@@ -36,6 +37,8 @@ export async function POST(request: NextRequest) {
         employee_type_id: employee_type_id,
         birth: birthDate,
         department_id: department_id,
+        deputy_id: deputy_id,
+        division_id: division_id,
         createdAt: new Date(),
         updatedAt: null,
         phone_number: phone_number,

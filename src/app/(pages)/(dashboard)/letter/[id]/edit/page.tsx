@@ -33,7 +33,7 @@ import { MultiSelect } from "@/components/ui/multi-selector";
 import {
   Department,
   getDepartments,
-} from "@/hooks/department/departmentAction";
+} from "@/hooks/organizations/department_action";
 
 import {
   LetterData,

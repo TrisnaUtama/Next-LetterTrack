@@ -38,15 +38,55 @@ import {
 } from "@/components/ui/table";
 
 import ConfirmationDialog from "../ConfirmationDialog";
-import AddDepartmentDialog from "../AddDialogDepartment";
 
-import {
-  getDepartments,
-  Department,
-} from "@/hooks/department/departmentAction";
-import EditDepartmentDialog from "../EditDialogDepartment";
+import { get_deputy, Deputy } from "@/hooks/organizations/deputy_action";
 
-export const columns: ColumnDef<Department>[] = [
+import EditDialog from "../EditDialog";
+import AddOrganizationsDialog from "../AddDialog";
+const ActionCell: React.FC<{ deputy: Deputy }> = ({ deputy }) => {
+  const [confirmationOpen, setConfirmationOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
+  return (
+    <div>
+      {confirmationOpen && (
+        <ConfirmationDialog
+          id={deputy.deputy_id}
+          type="Deputy"
+          onClose={() => setConfirmationOpen(false)}
+        />
+      )}
+      {isEditing && (
+        <EditDialog
+          type="Deputy"
+          id={deputy.deputy_id}
+          onClose={() => setIsEditing(false)}
+        />
+      )}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <span className="sr-only">Open menu</span>
+            <MoreHorizontal />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => setIsEditing(true)}>
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setConfirmationOpen(true)}>
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+};
+
+export const columns: ColumnDef<Deputy>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -70,7 +110,7 @@ export const columns: ColumnDef<Department>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "department_name",
+    accessorKey: "deputy_name",
     header: ({ column }) => {
       return (
         <div className="flex justify-center items-center">
@@ -78,20 +118,18 @@ export const columns: ColumnDef<Department>[] = [
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            Department
+            Deputy
             <ArrowUpDown className="w-3" />
           </Button>
         </div>
       );
     },
     cell: ({ row }) => (
-      <div className="lowercase text-center">
-        {row.original.department_name}
-      </div>
+      <div className="lowercase text-center">{row.original.deputy_name}</div>
     ),
   },
   {
-    accessorKey: "head_department",
+    accessorKey: "head_deputy",
     header: ({ column }) => {
       return (
         <div className="flex justify-center items-center">
@@ -100,68 +138,24 @@ export const columns: ColumnDef<Department>[] = [
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
             className="text-center"
           >
-            Head Department
+            Head Deputy
             <ArrowUpDown className="w-3" />
           </Button>
         </div>
       );
     },
     cell: ({ row }) => (
-      <div className="text-center lowercase">
-        {row.original.department_head}
-      </div>
+      <div className="text-center lowercase">{row.original.head_deputy}</div>
     ),
   },
-
   {
     id: "actions",
     enableHiding: false,
-    cell: ({ row }) => {
-      const department = row.original;
-      const [confirmationOpen, setConfirmationOpen] = useState(false);
-      const [isEditing, setIsEditing] = useState(false);
-
-      return (
-        <div>
-          {confirmationOpen && (
-            <ConfirmationDialog
-              id={department.department_id}
-              type="Department"
-              onClose={() => setConfirmationOpen(false)}
-            />
-          )}
-          {isEditing && (
-            <EditDepartmentDialog
-              id={department.department_id}
-              onClose={() => setIsEditing(false)}
-            />
-          )}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setIsEditing(true)}>
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setConfirmationOpen(true)}>
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      );
-    },
+    cell: ({ row }) => <ActionCell deputy={row.original} />,
   },
 ];
 
-export function TableDepartment() {
+export function TableDeputy() {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -169,7 +163,7 @@ export function TableDepartment() {
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
-  const [department, setDepartment] = useState<Department[]>([]);
+  const [deputy, setDeputy] = useState<Deputy[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [pagination, setPagination] = useState({
     pageIndex: 0,
@@ -179,17 +173,18 @@ export function TableDepartment() {
   useEffect(() => {
     const fetch = async () => {
       try {
-        const response = await getDepartments();
-        setDepartment(response.data!);
+        const response = await get_deputy();
+        setDeputy(response.data!);
       } catch (error: any) {
-        setDepartment(error.message);
+        setDeputy([]);
+        console.error(error.message);
       }
     };
     fetch();
   }, []);
 
   const table = useReactTable({
-    data: department,
+    data: deputy,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -213,15 +208,12 @@ export function TableDepartment() {
     <div className="w-full space-y-3">
       <div className="flex items-center justify-between">
         <Input
-          placeholder="Filter department..."
+          placeholder="Filter deputy..."
           value={
-            (table.getColumn("department_name")?.getFilterValue() as string) ??
-            ""
+            (table.getColumn("deputy_name")?.getFilterValue() as string) ?? ""
           }
           onChange={(event) =>
-            table
-              .getColumn("department_name")
-              ?.setFilterValue(event.target.value)
+            table.getColumn("deputy_name")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
@@ -231,7 +223,7 @@ export function TableDepartment() {
             className="bg-gradient-to-r from-[#01557B] to-[#019BE1] hover:bg-gradient-to-r hover:from-[#01547be2] hover:to-[#019ae1dc]"
             onClick={() => setIsDialogOpen(true)}
           >
-            Add Department
+            Add Deputy
           </Button>
           <select
             value={pagination.pageSize}
@@ -244,7 +236,7 @@ export function TableDepartment() {
               }));
             }}
             className="border text-sm border-gray-300 rounded-md text-gray-600 
-             p-2 bg-white hover:border-gray-400 focus:outline-none"
+            p-2 bg-white hover:border-gray-400 focus:outline-none"
           >
             {[5, 10, 20, 50].map((size) => (
               <option key={size} value={size}>
@@ -254,7 +246,10 @@ export function TableDepartment() {
           </select>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="ml-auto text-black/50 text-sm">
+              <Button
+                variant="outline"
+                className="ml-auto text-black/50 text-sm"
+              >
                 Columns <ChevronDown />
               </Button>
             </DropdownMenuTrigger>
@@ -355,7 +350,10 @@ export function TableDepartment() {
         </div>
       </div>
       {isDialogOpen && (
-        <AddDepartmentDialog onClose={() => setIsDialogOpen(false)} />
+        <AddOrganizationsDialog
+          onClose={() => setIsDialogOpen(false)}
+          type="Deputy"
+        />
       )}
     </div>
   );

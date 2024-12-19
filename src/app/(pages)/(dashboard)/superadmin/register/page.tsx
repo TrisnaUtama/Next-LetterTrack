@@ -32,7 +32,7 @@ import {
 import {
   Department,
   getDepartments,
-} from "@/hooks/department/departmentAction";
+} from "@/hooks/organizations/department_action";
 
 export default function Page() {
   const [employeeName, setEmployeeName] = useState("");
@@ -115,8 +115,6 @@ export default function Page() {
       password: password,
       gender,
     };
-
-    
 
     setIsSubmitting(true);
     const result = await RegisterEmployee(employeeData);

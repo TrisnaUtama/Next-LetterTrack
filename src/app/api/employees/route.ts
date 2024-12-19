@@ -63,6 +63,8 @@ export async function PATCH(request: NextRequest) {
     birth,
     gender,
     department_id,
+    deputy_id,
+    division_id,
     employee_type_id,
     password,
   } = await request.json();
@@ -93,6 +95,8 @@ export async function PATCH(request: NextRequest) {
         employee_name: employee_name,
         phone_number: phone_number,
         department_id: department_id,
+        deputy_id: deputy_id,
+        division_id: division_id,
         gender: gender,
         employee_type_id: employee_type_id,
         updatedAt: new Date(),

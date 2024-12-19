@@ -17,12 +17,13 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const data = await prisma.department.findMany();
-    if (!data || data.length === 0)
+    const deputys = await prisma.deputy.findMany();
+
+    if (!deputys || deputys.length === 0)
       return NextResponse.json({ message: "Not Found" }, { status: 404 });
 
     return NextResponse.json(
-      { message: "succesfully retrieved data departments.", data: data },
+      { message: "succesfully retrieved data deputys.", data: deputys },
       { status: 200 }
     );
   } catch (error) {
@@ -38,9 +39,9 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
-  const { department_name, department_head, division_id } =
-    await request.json();
+export async function FIND_DEPUTY(request: NextRequest) {
+  const deputy_id = request.nextUrl.searchParams.get("deputy_id");
+
   const tokenResponse = await verifyToken(request);
 
   if (tokenResponse instanceof NextResponse) {
@@ -53,50 +54,102 @@ export async function POST(request: NextRequest) {
       { status: 401 }
     );
   }
-  try {
-    if (!department_name)
-      return NextResponse.json(
-        {
-          message: "department name must be filled",
-        },
-        {
-          status: 400,
-        }
-      );
 
-    if (!department_head)
-      return NextResponse.json(
-        {
-          message: "department head must be filled",
-        },
-        {
-          status: 400,
-        }
-      );
-    const departments = await prisma.department.findMany();
-    const departmentExists = departments.some(
-      (department) => department.department_name === department_name
+  if (!deputy_id)
+    return NextResponse.json(
+      {
+        message: "deputy id is required",
+      },
+      { status: 400 }
     );
 
-    if (departmentExists)
+  try {
+    const res = await prisma.deputy.findUnique({
+      where: {
+        deputy_id: Number(deputy_id),
+      },
+    });
+
+    if (!res)
+      return NextResponse.json({ message: "Not Found" }, { status: 404 });
+
+    return NextResponse.json(
+      { message: "succesfully retrieved data deputy.", data: res },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    console.log(error.message);
+    NextResponse.json(
+      {
+        messsage: error.message,
+      },
+      {
+        status: 500,
+      }
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  const tokenResponse = await verifyToken(request);
+  const { deputy_name, head_deputy } = await request.json();
+
+  if (!deputy_name)
+    return NextResponse.json(
+      {
+        message: "deputy name must be filled",
+      },
+      {
+        status: 400,
+      }
+    );
+
+  if (!head_deputy)
+    return NextResponse.json(
+      {
+        message: "head deputy must be filled",
+      },
+      {
+        status: 400,
+      }
+    );
+
+  if (tokenResponse instanceof NextResponse) {
+    return tokenResponse;
+  }
+
+  if (!tokenResponse.success) {
+    return NextResponse.json(
+      { message: "Unauthorized access" },
+      { status: 401 }
+    );
+  }
+
+  try {
+    const deputys = await prisma.deputy.findMany();
+    const exist_deputy = deputys.some(
+      (deputy) => deputy.deputy_name === deputy_name
+    );
+
+    if (exist_deputy)
       return NextResponse.json(
         {
-          message: "department name already exits",
+          message: "deputy name already exits",
         },
         {
           status: 409,
         }
       );
-    const data = await prisma.department.create({
+
+    const new_deputy = await prisma.deputy.create({
       data: {
-        department_name: department_name,
-        department_head: department_head,
-        division_id,
+        deputy_name: deputy_name,
+        head_deputy: head_deputy,
       },
     });
 
     return NextResponse.json(
-      { message: "succesfully create data department.", data: data },
+      { message: "succesfully create data deputy.", data: new_deputy },
       { status: 200 }
     );
   } catch (error: any) {
@@ -113,16 +166,8 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const { department_id, department_name, department_head, division_id } =
-    await request.json();
-  if (!department_id) {
-    return NextResponse.json(
-      { message: "departments not found." },
-      { status: 400 }
-    );
-  }
   const tokenResponse = await verifyToken(request);
-
+  const { deputy_name, head_deputy, deputy_id } = await request.json();
   if (tokenResponse instanceof NextResponse) {
     return tokenResponse;
   }
@@ -133,9 +178,9 @@ export async function PATCH(request: NextRequest) {
       { status: 401 }
     );
   }
+
   try {
-    
-    if (!department_name)
+    if (!deputy_name)
       return NextResponse.json(
         {
           message: "department name must be filled",
@@ -145,7 +190,7 @@ export async function PATCH(request: NextRequest) {
         }
       );
 
-    if (!department_head)
+    if (!head_deputy)
       return NextResponse.json(
         {
           message: "department head must be filled",
@@ -155,18 +200,17 @@ export async function PATCH(request: NextRequest) {
         }
       );
 
-    const updatedDepartments = await prisma.department.update({
-      where: { department_id },
+    const updated_deputy = await prisma.deputy.update({
+      where: { deputy_id },
       data: {
-        department_name,
-        department_head,
-        division_id,
+        deputy_name,
+        head_deputy,
       },
     });
     return NextResponse.json(
       {
         message: "success update new employee",
-        data: updatedDepartments,
+        data: updated_deputy,
       },
       { status: 200 }
     );
@@ -182,8 +226,8 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const { department_id } = await request.json();
   const tokenResponse = await verifyToken(request);
+  const { deputy_id } = await request.json();
 
   if (tokenResponse instanceof NextResponse) {
     return tokenResponse;
@@ -195,17 +239,17 @@ export async function DELETE(request: NextRequest) {
       { status: 401 }
     );
   }
+
   try {
-    const deletedDepartment = await prisma.department.delete({
+    await prisma.deputy.delete({
       where: {
-        department_id: department_id,
+        deputy_id: deputy_id,
       },
     });
 
     return NextResponse.json(
       {
-        message: "Success Delete Department",
-        data: deletedDepartment,
+        message: `Success Delete Deputy with id ${deputy_id}`,
       },
       {
         status: 200,

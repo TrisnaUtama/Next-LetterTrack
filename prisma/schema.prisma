@@ -49,24 +49,50 @@ model Letter_Type {
   Letter         Letter[]
 }
 
+model Deputy {
+  deputy_id   Int         @id @default(autoincrement())
+  deputy_name String      @unique
+  head_deputy String
+  Division    Division[]
+  Signature   Signature[]
+  Employee    Employee[]
+}
+
+model Division {
+  division_id   Int          @id @default(autoincrement())
+  division_name String       @unique
+  head_division String
+  deputy_id     Int?
+  Department    Department[]
+  Signature     Signature[]
+  Employee      Employee[]
+  Deputy        Deputy?      @relation(fields: [deputy_id], references: [deputy_id])
+}
+
 model Department {
   department_id   Int         @id @default(autoincrement())
   department_name String      @unique
   department_head String
   Employee        Employee[]
   Signature       Signature[]
+  division_id     Int?
+  Division        Division?   @relation(fields: [division_id], references: [division_id])
 }
 
 model Signature {
   //foreign Key many to many realtions
   signature_id  Int              @id @default(autoincrement())
   letter        Letter           @relation(fields: [letter_id], references: [letter_id])
-  department    Department       @relation(fields: [department_id], references: [department_id])
+  department    Department?      @relation(fields: [department_id], references: [department_id])
   letter_id     String
-  department_id Int
+  department_id Int?
   status        Signature_Status @default(NOT_ARRIVE)
   signed_date   DateTime?
   descriptions  String?
+  Deputy        Deputy?          @relation(fields: [deputy_id], references: [deputy_id])
+  deputy_id     Int?
+  Division      Division?        @relation(fields: [division_id], references: [division_id])
+  division_id   Int?
 }
 
 model Letter {
@@ -97,8 +123,12 @@ model Employee {
   updatedAt     DateTime? @updatedAt @map(name: "updated_at")
 
   // foreign key
-  department       Department    @relation(fields: [department_id], references: [department_id])
   employee_type    Employee_Type @relation(fields: [employee_type_id], references: [employee_type_id])
-  department_id    Int
+  department_id    Int?
+  division_id      Int?
+  deputy_id        Int?
   employee_type_id Int
+  Department       Department?   @relation(fields: [department_id], references: [department_id])
+  Division         Division?     @relation(fields: [division_id], references: [division_id])
+  Deputy           Deputy?       @relation(fields: [deputy_id], references: [deputy_id])
 }

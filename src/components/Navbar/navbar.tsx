@@ -18,7 +18,7 @@ import { faChevronDown, faBars } from "@fortawesome/free-solid-svg-icons";
 import Link from "next/link";
 import LogoutAction from "@/hooks/(auth)/logout/logoutAction";
 import findAction, { Employee } from "@/hooks/employee/findAction";
-import ProfileDialog from "@/components/ProfileDialog"; 
+import ProfileDialog from "@/components/ProfileDialog";
 
 export default function Navbar({
   toogler,
@@ -31,7 +31,6 @@ export default function Navbar({
 }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [user, setUser] = useState<Employee | null>(null);
-  
 
   const handleLogout = () => {
     LogoutAction();
@@ -53,7 +52,8 @@ export default function Navbar({
     <div className="flex justify-between items-center h-16 w-full bg-white border-b-2 pe-10">
       <div
         className={`ms-2 bg-white transition-all duration-500`}
-        onClick={toogler}>
+        onClick={toogler}
+      >
         <FontAwesomeIcon
           icon={faBars}
           className={`text-slate-400 w-3 p-3 cursor-pointer transition-transform duration-500 ${

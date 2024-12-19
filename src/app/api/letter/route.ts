@@ -99,6 +99,8 @@ export async function POST(request: NextRequest) {
     recipient,
     letter_type_id,
     department_id,
+    division_id,
+    deputy_id,
     login_user_department_id,
   } = await request.json();
   const tokenResponse = await verifyToken(request);
@@ -144,9 +146,13 @@ export async function POST(request: NextRequest) {
             department: {
               connect: { department_id: id },
             },
+            Division : {
+              
+            },
             status: id == login_user_department_id ? "ARRIVE" : "NOT_ARRIVE",
           })),
-        },
+        }
+        ,
       },
     });
 

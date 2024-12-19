@@ -56,6 +56,8 @@ export default function EnhancedDataTable() {
   const [searchTerm, setSearchTerm] = useState("");
   const [letterFiltered, setLetterFiltered] = useState<Letter[]>([]);
   const [employeeLogin, setEmployeeLogin] = useState<Employee>();
+  const [detailLetterOpen, setDetailLetterOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -283,8 +285,6 @@ export default function EnhancedDataTable() {
       enableHiding: false,
       cell: ({ row }) => {
         const letter = row.original;
-        const [detailLetterOpen, setDetailLetterOpen] = useState(false);
-        const [isOpen, setIsOpen] = useState(false);
 
         return (
           <DropdownMenu>

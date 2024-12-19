@@ -45,7 +45,7 @@ import {
 import {
   Department,
   getDepartments,
-} from "@/hooks/department/departmentAction";
+} from "@/hooks/organizations/department_action";
 
 import ConfirmationDialog from "@/components/ConfirmationDialog";
 
@@ -57,6 +57,7 @@ export default function EnhancedDataTable() {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [confirmationOpen, setConfirmationOpen] = useState(false);
   const statusColor: Record<EmployeeStatus, string> = {
     ACTIVE: "bg-green-500 text-white",
     UNACTIVE: "bg-red-500 text-white",
@@ -224,7 +225,6 @@ export default function EnhancedDataTable() {
       enableHiding: false,
       cell: ({ row }) => {
         const employee = row.original;
-        const [confirmationOpen, setConfirmationOpen] = useState(false);
 
         return (
           <div>

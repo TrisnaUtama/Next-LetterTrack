@@ -73,7 +73,7 @@ export default function ProfileDialog({
       <div className="sm:max-w-[425px] bg-white ">
         <h1 className="text-lg font-semibold text-gray-800">Edit Profile</h1>
         <p className="text-slate-500 text-sm mb-2">
-          Make changes to your profile here. Click save when you're done.
+          Make changes to your profile here. Click save when you&apos;re done.
         </p>
 
         <div className="mb-4">

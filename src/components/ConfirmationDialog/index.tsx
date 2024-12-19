@@ -5,7 +5,9 @@ import Modal from "../Modal";
 import { Button } from "../ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { deleteDepartment } from "@/hooks/department/departmentAction";
+import { deleteDepartment } from "@/hooks/organizations/department_action";
+import { delete_deputy } from "@/hooks/organizations/deputy_action";
+import { delete_division } from "@/hooks/organizations/division_action";
 import { deleteEmployee } from "@/hooks/employee/employeesAction";
 
 export default function ConfirmationDialog({
@@ -23,14 +25,16 @@ export default function ConfirmationDialog({
   const handleDelete = async () => {
     setLoader(true);
     let res;
-    if (type === "Department") {
-      res = await deleteDepartment(id);
-    } else {
-      res = await deleteEmployee(id);
-    }
-    console.log("response ", res);
+    if (type === "Department") res = await deleteDepartment(id);
+
+    if (type === "Employee") res = await deleteEmployee(id);
+
+    if (type === "Deputy") res = await delete_deputy(id);
+
+    if (type === "Division") res = await delete_division(id);
+
     setLoader(false);
-    if (!res.status) {
+    if (!res?.status) {
       toast({
         variant: "destructive",
         title: "Something went wrong!",

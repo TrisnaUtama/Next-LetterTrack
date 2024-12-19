@@ -2,7 +2,9 @@ import React from "react";
 import ChartEmployee from "@/components/chart/chartEmployee";
 import ChartLetter from "@/components/chart/chartLetter";
 import { ChartLetterStatus } from "@/components/chart/chartLetterStatus";
-import { TableDepartment } from "@/components/tableDepartment";
+import { TableDepartment } from "@/components/Table_Organization/department";
+import { TableDeputy } from "@/components/Table_Organization/deputy";
+import { TableDivision } from "@/components/Table_Organization/division";
 
 export default function DashboardAdmin() {
   return (
@@ -13,6 +15,8 @@ export default function DashboardAdmin() {
         <ChartLetterStatus />
       </div>
       <div className="mx-5">
+        <TableDeputy />
+        <TableDivision />
         <TableDepartment />
       </div>
     </div>
