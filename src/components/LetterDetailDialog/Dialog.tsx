@@ -1,23 +1,30 @@
 import React, { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { FileText, Clock, User, CheckCircle2 } from "lucide-react";
 import { Letter } from "@/hooks/letter/letterAction";
-import { Signature, getSignature } from "@/hooks/signature/signatureAction";
+import { Signature, getSignatures } from "@/hooks/signature/signatureAction";
 import Modal from "@/components/Modal";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useRouter } from "next/navigation";
 
 interface LetterDetailDialogProps {
-  letter: Letter | null;
+  letter: Letter;
+  onClose: () => void;
 }
 
-const LetterDetailDialog: React.FC<LetterDetailDialogProps> = ({ letter }) => {
+const LetterDetailDialog: React.FC<LetterDetailDialogProps> = ({
+  letter,
+  onClose,
+}) => {
   const [signature, setSignature] = useState<Signature[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await getSignature(letter!.letter_id);
+        const response = await getSignatures(letter!.letter_id);
         if (response.success) {
           setSignature(response.data);
         } else {
@@ -80,6 +87,10 @@ const LetterDetailDialog: React.FC<LetterDetailDialogProps> = ({ letter }) => {
         <div className="border-b-2 pb-4 p-4 bg-white rounded-t-lg shadow-sm">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold text-gray-800">Letter Details</h2>
+
+            <Button onClick={onClose} className="text-sm">
+              Back
+            </Button>
           </div>
         </div>
 
@@ -166,17 +177,73 @@ const LetterDetailDialog: React.FC<LetterDetailDialogProps> = ({ letter }) => {
                     </div>
                     <div>
                       <p className="text-sm font-medium">To:</p>
-                      {signature?.map((sig, index) => (
-                        <p key={index} className="text-sm text-gray-700">
-                          {sig.department.department_name}
-                        </p>
-                      ))}
+                      <div className="max-h-60 overflow-y-auto space-y-2">
+                        {/* Grouped Department, Division, Deputy */}
+                        <div>
+                          {signature?.some((sig) => sig.department) && (
+                            <div>
+                              <Badge className="text-xs bg-green-100 text-green-800 hover:bg-green-200 hover:text-green-900">
+                                Department
+                              </Badge>
+                              {signature
+                                .filter((sig) => sig.department)
+                                .map((sig, index) => (
+                                  <p
+                                    key={index}
+                                    className="text-sm text-gray-700 ml-4 mt-2"
+                                  >
+                                    {sig.department?.department_name}
+                                  </p>
+                                ))}
+                            </div>
+                          )}
+                        </div>
+
+                        <div>
+                          {signature?.some((sig) => sig.Division) && (
+                            <div>
+                              <Badge className="text-xs bg-blue-100 text-blue-800 hover:bg-blue-200 hover:text-blue-800">
+                                Division
+                              </Badge>
+                              {signature
+                                .filter((sig) => sig.Division)
+                                .map((sig, index) => (
+                                  <p
+                                    key={index}
+                                    className="text-sm text-gray-700 ml-4 mt-2"
+                                  >
+                                    {sig.Division?.division_name}
+                                  </p>
+                                ))}
+                            </div>
+                          )}
+                        </div>
+
+                        <div>
+                          {signature?.some((sig) => sig.Deputy) && (
+                            <div>
+                              <Badge className="text-xs bg-gray-100 text-gray-800 hover:bg-gray-200 hover:text-gray-900">
+                                Deputy
+                              </Badge>
+                              {signature
+                                .filter((sig) => sig.Deputy)
+                                .map((sig, index) => (
+                                  <p
+                                    key={index}
+                                    className="text-sm text-gray-700 ml-4 mt-2"
+                                  >
+                                    {sig.Deputy?.deputy_name}
+                                  </p>
+                                ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
               </div>
             </div>
-
             {/* Tracking Status */}
             <div className="relative">
               <div className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow duration-300 border">
@@ -222,8 +289,20 @@ const LetterDetailDialog: React.FC<LetterDetailDialogProps> = ({ letter }) => {
                                 size={20}
                               />
                             </div>
-                            <p className="text-sm font-medium text-gray-700">
-                              {sig.department.department_name}
+                            <p
+                              className={`text-sm font-medium text-gray-700 p-1 rounded-md ${
+                                sig.department != null
+                                  ? "bg-green-100"
+                                  : sig.Division != null
+                                  ? "bg-blue-100"
+                                  : "bg-gray-100"
+                              }`}
+                            >
+                              {sig.department != null
+                                ? sig.department?.department_name
+                                : sig.Division != null
+                                ? sig.Division?.division_name
+                                : sig.Deputy?.deputy_name}
                             </p>
                             <p className="text-xs text-gray-500">
                               {sig.descriptions}

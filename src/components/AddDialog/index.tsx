@@ -5,6 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+
 import {
   Select,
   SelectTrigger,
@@ -12,16 +14,18 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+
 import {
   Department,
   addDepartment,
 } from "@/hooks/organizations/department_action";
-import { useRouter } from "next/navigation";
+
 import {
   add_deputy,
   Deputy,
   get_deputy,
 } from "@/hooks/organizations/deputy_action";
+
 import {
   add_division,
   Division,
@@ -57,22 +61,27 @@ export default function AddOrganizationsDialog({
 
   const [loader, setLoader] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const { toast } = useToast();
-  const router = useRouter();
   const [deputies, setDeputies] = useState<Deputy[]>([]);
   const [divisions, setDivisions] = useState<Division[]>([]);
+  const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         if (type === "Division") {
           const deputyData = await get_deputy();
-          setDeputies(deputyData?.data ?? []);
+          if (deputyData.status) {
+            console.log(deputyData);
+            setDeputies(deputyData?.data ?? []);
+          }
         }
 
         if (type === "Department") {
           const divisionData = await get_division();
-          setDivisions(divisionData?.data ?? []);
+          if (divisionData.status) {
+            setDivisions(divisionData?.data ?? []);
+          }
         }
       } catch (error) {
         toast({
@@ -84,7 +93,7 @@ export default function AddOrganizationsDialog({
     };
 
     fetchData();
-  }, [type]);
+  }, [type, toast]);
 
   const handleSelectChange = (value: string) => {
     const selectValue = Number(value);
@@ -191,6 +200,8 @@ export default function AddOrganizationsDialog({
       response = await add_division(division);
     }
     setLoader(false);
+
+    console.log("API Response:", response);
 
     if (!response?.status) {
       toast({
@@ -305,7 +316,7 @@ export default function AddOrganizationsDialog({
                   : "division_deputy_id"
               }
             >
-              {type} Head
+              {type === "Department" ? "Division" : "Deputy"}
             </Label>
             <Select onValueChange={handleSelectChange}>
               <SelectTrigger
@@ -316,7 +327,11 @@ export default function AddOrganizationsDialog({
                 }
                 className="h-10 border focus:border-blue-500 focus:outline-none"
               >
-                <SelectValue placeholder={`Select ${type} Head`} />
+                <SelectValue
+                  placeholder={`Select ${
+                    type === "Department" ? "Division" : "Deputy"
+                  }`}
+                />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="0">Default Value</SelectItem>

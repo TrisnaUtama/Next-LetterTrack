@@ -11,31 +11,31 @@ import {
   Signature,
 } from "@/hooks/signature/signatureAction";
 
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
-
 export default function SignLetterDialog({
   letter_id,
   signature_id,
   department_id_current,
+  division_id_current,
+  deputy_id_current,
   onClose,
 }: {
   letter_id: string;
   signature_id: number;
   department_id_current: number;
+  division_id_current: number;
+  deputy_id_current: number;
   onClose: () => void;
 }) {
   const [data, setData] = useState<{
     description: string;
-    department_id: number;
+    department_id: number | null;
+    deputy_id: number | null;
+    division_id: number | null;
   }>({
     description: "",
-    department_id: 0,
+    department_id: null,
+    deputy_id: null,
+    division_id: null,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -59,13 +59,6 @@ export default function SignLetterDialog({
     fetchData();
   }, [letter_id]);
 
-  const handleSelectChange = (value: string) => {
-    setData((prevData) => ({
-      ...prevData,
-      department_id: Number(value),
-    }));
-  };
-
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -76,13 +69,39 @@ export default function SignLetterDialog({
     }));
   };
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-    if (!data.description) newErrors.description = "Description is required.";
-    // if (data.department_id <= 0)
-    //   newErrors.department = "Please select a department to send.";
+  const handleCheckboxChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    category: "department" | "deputy" | "division"
+  ) => {
+    const { value, checked } = e.target;
+    const idValue = Number(value);
 
-    setErrors(newErrors);
+    if (checked) {
+      setData((prevData) => ({
+        ...prevData,
+        [`${category}_id`]: idValue,
+        department_id: category === "department" ? idValue : null,
+        deputy_id: category === "deputy" ? idValue : null,
+        division_id: category === "division" ? idValue : null,
+      }));
+    } else {
+      setData((prevData) => ({
+        ...prevData,
+        [`${category}_id`]: null,
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    const isNoNotArrive = !signature.some((sig) => sig.status === "NOT_ARRIVE");
+    const newErrors: Record<string, string> = {};
+    if (!isNoNotArrive) {
+      if (!data.description) newErrors.description = "Description is required.";
+      if (!data.department_id && !data.deputy_id && !data.division_id)
+        newErrors.selected =
+          "Please select at least one recipient (department, deputy, or division).";
+      setErrors(newErrors);
+    }
     return newErrors;
   };
 
@@ -102,7 +121,9 @@ export default function SignLetterDialog({
     const updated = await updateStatus(
       data.description,
       letter_id,
-      data.department_id,
+      data.department_id ?? null,
+      data.deputy_id ?? null,
+      data.division_id ?? null,
       signature_id
     );
 
@@ -127,70 +148,169 @@ export default function SignLetterDialog({
 
   return (
     <Modal>
-      <div className="sm:max-w-[425px] bg-white ">
-        <h1 className="text-lg font-semibold text-gray-800">Sign Letter</h1>
-        <p className="text-slate-500 text-sm mb-2">
-          Confirmation the letter sign, fill the description and send the letter{" "}
-          into another department. Click save when you&apos;re done.
-        </p>
-        <div className="mb-4">
-          <Label htmlFor="department">Send To</Label>
-          <Select onValueChange={handleSelectChange}>
-            <SelectTrigger
-              className={`mt-[6px] h-10 border ${
-                errors.department ? "border-red-500" : "border-gray-300"
-              } focus:border-blue-500 focus:outline-none`}>
-              <SelectValue placeholder="Select Department" />
-            </SelectTrigger>
-            <SelectContent>
-              {signature.map((value) => (
-                <SelectItem
-                  key={value.department.department_id}
-                  value={value.department.department_id.toString()}
-                  disabled={
-                    value.department.department_id === department_id_current ||
-                    value.status === "SIGNED" ||
-                    value.status === "ARRIVE"
-                  }>
-                  {value.department.department_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {errors.department && (
-            <p className="text-red-500 text-sm">{errors.department}</p>
-          )}
-          <div className="mt-5">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              placeholder="Enter the letter description"
-              value={data.description}
-              onChange={handleInputChange}
-              className={`mb-1 h-10 p-3 font-medium border ${
-                errors.description ? "border-red-500" : "border-gray-300"
-              } focus:border-blue-500 focus:outline-none`}
-            />
-            {errors.description && (
-              <p className="text-red-500 text-sm">{errors.description}</p>
-            )}
+      <h1 className="text-2xl font-semibold text-gray-800">Sign Letter</h1>
+      <p className="text-sm text-gray-600 mt-2 mb-4">
+        Confirm the letter sign, fill in the description, and send the letter to
+        another department. Click save when you&apos;re done.
+      </p>
+
+      <div className="mb-6">
+        <Label htmlFor="department" className="block text-lg font-medium mb-2">
+          Send To
+        </Label>
+        <div className="space-y-4">
+          {/* Departments */}
+          <h3 className="text-md font-semibold">Departments</h3>
+          <div className="space-y-2 max-h-[200px] overflow-y-auto">
+            {signature.map((value) => {
+              if (value.department) {
+                const isDisabled =
+                  value.department.department_id === department_id_current ||
+                  value.status === "SIGNED" ||
+                  value.status === "ARRIVE";
+                return (
+                  <div
+                    key={value.department.department_id}
+                    className="flex items-center space-x-3"
+                  >
+                    <input
+                      type="checkbox"
+                      id={`department-${value.department.department_id}`}
+                      value={value.department.department_id}
+                      onChange={(e) => handleCheckboxChange(e, "department")}
+                      checked={
+                        data.department_id === value.department.department_id
+                      }
+                      disabled={isDisabled}
+                      className="form-checkbox text-blue-500 h-5 w-5 transition duration-200 ease-in-out"
+                    />
+                    <label
+                      htmlFor={`department-${value.department.department_id}`}
+                      className="text-gray-700"
+                    >
+                      {value.department.department_name}
+                    </label>
+                  </div>
+                );
+              }
+              return null;
+            })}
+          </div>
+
+          {/* Deputies */}
+          <h3 className="text-md font-semibold">Deputies</h3>
+          <div className="space-y-2 max-h-[200px] overflow-y-auto">
+            {signature.map((value) => {
+              if (value.Deputy) {
+                const isDisabled =
+                  value.Deputy.deputy_id === deputy_id_current ||
+                  value.status === "SIGNED" ||
+                  value.status === "ARRIVE";
+                return (
+                  <div
+                    key={value.Deputy.deputy_id}
+                    className="flex items-center space-x-3"
+                  >
+                    <input
+                      type="checkbox"
+                      id={`deputy-${value.Deputy.deputy_id}`}
+                      value={value.Deputy.deputy_id}
+                      onChange={(e) => handleCheckboxChange(e, "deputy")}
+                      checked={data.deputy_id === value.Deputy.deputy_id}
+                      disabled={isDisabled}
+                      className="form-checkbox text-blue-500 h-5 w-5 transition duration-200 ease-in-out"
+                    />
+                    <label
+                      htmlFor={`deputy-${value.Deputy.deputy_id}`}
+                      className="text-gray-700"
+                    >
+                      {value.Deputy.deputy_name}
+                    </label>
+                  </div>
+                );
+              }
+              return null;
+            })}
+          </div>
+
+          {/* Divisions */}
+          <h3 className="text-md font-semibold">Divisions</h3>
+          <div className="space-y-2 max-h-[200px] overflow-y-auto">
+            {signature.map((value) => {
+              if (value.Division) {
+                const isDisabled =
+                  value.Division.division_id === division_id_current ||
+                  value.status === "SIGNED" ||
+                  value.status === "ARRIVE";
+                return (
+                  <div
+                    key={value.Division.division_id}
+                    className="flex items-center space-x-3"
+                  >
+                    <input
+                      type="checkbox"
+                      id={`division-${value.Division.division_id}`}
+                      value={value.Division.division_id}
+                      onChange={(e) => handleCheckboxChange(e, "division")}
+                      checked={data.division_id === value.Division.division_id}
+                      disabled={isDisabled}
+                      className="form-checkbox text-blue-500 h-5 w-5 transition duration-200 ease-in-out"
+                    />
+                    <label
+                      htmlFor={`division-${value.Division.division_id}`}
+                      className="text-gray-700"
+                    >
+                      {value.Division.division_name}
+                    </label>
+                  </div>
+                );
+              }
+              return null;
+            })}
           </div>
         </div>
-        <div className="flex justify-between">
-          <Button variant="outline" onClick={onClose} className="mr-2">
-            Cancel
-          </Button>
-          <Button
-            onClick={submitDialogAndReload}
-            disabled={loader}
-            className="bg-gradient-to-r from-[#01557B] to-[#019BE1] hover:bg-gradient-to-r hover:from-[#01547be2] hover:to-[#019ae1dc]">
-            {loader ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              "Save Changes"
-            )}
-          </Button>
-        </div>
+        {errors.selected && (
+          <p className="text-red-500 text-sm mt-2">{errors.selected}</p>
+        )}
+      </div>
+
+      <div className="mb-6">
+        <Label htmlFor="description" className="block text-lg font-medium mb-2">
+          Description
+        </Label>
+        <Textarea
+          id="description"
+          placeholder="Enter the letter description"
+          value={data.description}
+          onChange={handleInputChange}
+          className={`w-full p-3 rounded-md border ${
+            errors.description ? "border-red-500" : "border-gray-300"
+          } focus:ring-2 focus:ring-blue-500 transition duration-200`}
+        />
+        {errors.description && (
+          <p className="text-red-500 text-sm mt-2">{errors.description}</p>
+        )}
+      </div>
+
+      <div className="flex justify-end space-x-3">
+        <Button
+          variant="outline"
+          onClick={onClose}
+          className="px-6 py-2 text-gray-700 border-gray-300 hover:bg-gray-100 focus:ring-2 focus:ring-blue-500"
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={submitDialogAndReload}
+          disabled={loader}
+          className="px-6 py-2 bg-gradient-to-r from-[#01557B] to-[#019BE1] text-white hover:bg-gradient-to-r hover:from-[#01547be2] hover:to-[#019ae1dc] focus:ring-2 focus:ring-blue-500 transition duration-200"
+        >
+          {loader ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            "Save Changes"
+          )}
+        </Button>
       </div>
     </Modal>
   );

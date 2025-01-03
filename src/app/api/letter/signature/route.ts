@@ -4,8 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
-  const letter_id = searchParams.get("letter_id");
-
+  const deputy_id = searchParams.get("deputy_id");
   const tokenResponse = await verifyToken(request);
 
   if (tokenResponse instanceof NextResponse) {
@@ -19,45 +18,118 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  if (!letter_id || letter_id.length <= 0)
-    return NextResponse.json(
-      { message: "Invalid department ID" },
-      { status: 400 }
-    );
   try {
+    const deputy_signature = await prisma.signature.findMany({
+      select: {
+        signature_id: true,
+        letter_id: true,
+        status: true,
+        descriptions: true,
+        signed_date: true,
+        letter: {
+          select: {
+            letter_date: true,
+            recipient: true,
+            sender: true,
+            subject: true,
+            status: true,
+            letter_type: {
+              select: {
+                letter_type: true,
+              },
+            },
+          },
+        },
+        Deputy: {
+          select: {
+            deputy_id: true,
+            deputy_name: true,
+          },
+        },
+      },
+      where: {
+        Deputy: {
+          NOT: {
+            deputy_id: undefined,
+          },
+        },
+      },
+    });
+
     const data = await prisma.signature.findMany({
       select: {
         signature_id: true,
         letter_id: true,
         status: true,
-        signed_date: true,
         descriptions: true,
+        signed_date: true,
+        letter: {
+          select: {
+            letter_date: true,
+            recipient: true,
+            sender: true,
+            subject: true,
+            status: true,
+            letter_type: {
+              select: {
+                letter_type: true,
+              },
+            },
+          },
+        },
+        Deputy: {
+          select: {
+            deputy_id: true,
+            deputy_name: true,
+          },
+        },
+        Division: {
+          select: {
+            division_id: true,
+            division_name: true,
+          },
+        },
         department: {
           select: {
-            department_id: true,
             department_name: true,
-            department_head: true,
+            department_id: true,
           },
         },
       },
       where: {
-        letter_id: letter_id,
+        OR: [
+          {
+            department: {
+              Division: {
+                deputy_id: Number(deputy_id),
+              },
+            },
+          },
+          {
+            Division: {
+              deputy_id: Number(deputy_id),
+            },
+          },
+        ],
       },
     });
+
     if (!data || data.length === 0) {
       return NextResponse.json(
         {
-          message: "unsuccessfully retrieved signature data",
+          message: "unsuccessfully retrieved letter data",
           data: data,
         },
         { status: 404 }
       );
     }
 
+    const mergedData = [...deputy_signature, ...data];
+
     return NextResponse.json(
       {
-        message: "Successfully retrieved signature data",
-        data: data,
+        message: "Successfully retrieved letter data",
+        data: mergedData,
       },
       { status: 200 }
     );
@@ -76,8 +148,14 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const { descriptions, signature_id, letter_id, department_id } =
-    await request.json();
+  const {
+    descriptions,
+    signature_id,
+    letter_id,
+    department_id,
+    deputy_id,
+    division_id,
+  } = await request.json();
 
   const tokenResponse = await verifyToken(request);
 
@@ -115,6 +193,8 @@ export async function PATCH(request: NextRequest) {
       where: {
         letter_id: letter_id,
         department_id: department_id,
+        deputy_id: deputy_id,
+        division_id: division_id,
       },
       data: {
         status: "ARRIVE",

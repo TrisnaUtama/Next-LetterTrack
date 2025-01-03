@@ -3,9 +3,23 @@ import prisma from "@/lib/prisma";
 import validateUsername from "@/utils/usernameValidate";
 import bcrypt from "bcryptjs";
 import * as jose from "jose";
+import { verifyToken } from "@/lib/validationToken";
 
 export async function GET(request: NextRequest) {
   const employee_id = request.nextUrl.searchParams.get("employee_id");
+  const tokenResponse = await verifyToken(request);
+
+  if (tokenResponse instanceof NextResponse) {
+    return tokenResponse;
+  }
+
+  if (!tokenResponse.success) {
+    return NextResponse.json(
+      { message: "Unauthorized access" },
+      { status: 401 }
+    );
+  }
+
   if (!employee_id) {
     return NextResponse.json(
       { message: "Employee ID is required." },
@@ -74,7 +88,7 @@ export async function POST(request: NextRequest) {
     const secret = new TextEncoder().encode(process.env.JWT_SECRET);
     const alg = "HS256";
     const jwt = await new jose.SignJWT({ userId: user.employee_id })
-      .setProtectedHeader({ alg })
+      .setProtectedHeader({ alg, typ: "JWT" })
       .setExpirationTime("72h")
       .setSubject(user.employee_id)
       .sign(secret);

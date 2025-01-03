@@ -29,6 +29,14 @@ export interface Letter {
     department_name: string;
     department_id: Number;
   };
+  Division: {
+    division_name: string;
+    division_id: Number;
+  };
+  Deputy: {
+    deputy_name: string;
+    deputy_id: Number;
+  };
 }
 
 export interface LetterData {
@@ -38,7 +46,10 @@ export interface LetterData {
   recipient: string;
   letter_type_id: number;
   department_id: number[];
-  login_user_department_id?: number;
+  division_id: number[];
+  deputy_id: number[];
+  primary_organization_type?: string;
+  primary_organization_id?: number;
 }
 
 export interface LetterChart {
@@ -59,12 +70,6 @@ export async function addLetter(data: LetterData) {
     };
   }
   const token = cookiesParsed.token;
-  const user_login_department_id = cookiesParsed.data.department_id;
-
-  const letterDataWithUserDepartment = {
-    ...data,
-    login_user_department_id: user_login_department_id,
-  };
 
   try {
     const res = await fetch(`${process.env.ROOT_URL}/api/letter`, {
@@ -73,7 +78,7 @@ export async function addLetter(data: LetterData) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(letterDataWithUserDepartment),
+      body: JSON.stringify(data),
     });
 
     if (!res.ok) {
@@ -109,7 +114,6 @@ export async function getAllLetter() {
     };
   }
   const token = cookiesParsed.token;
-  const department_id = cookiesParsed.data.department_id;
 
   try {
     const res = await fetch(`${process.env.ROOT_URL}/api/letters`, {
@@ -140,20 +144,23 @@ export async function getAllLetter() {
 }
 
 export async function getLetter() {
+  const cookiesParsed = cookies().get("USER");
+
   if (!cookiesParsed) {
     return {
       status: false,
       message: "No user token found in cookies.",
     };
   }
-  const token = cookiesParsed.token;
-  const department_id = cookiesParsed.data.department_id;
+
+  const tokenParsed = JSON.parse(cookiesParsed.value);
+  const token = tokenParsed.token;
+  const deputy_id = tokenParsed.data.deputy_id;
+  const employee_type = tokenParsed.data.employee_type_id;
 
   try {
     const res = await fetch(
-      `${process.env.ROOT_URL}/api/letter?departmentId=${Number(
-        department_id
-      )}`,
+      `${process.env.ROOT_URL}/api/letter?deputy_id=${deputy_id}&employee_type_id=${employee_type}`,
       {
         method: "GET",
         headers: {
@@ -194,9 +201,9 @@ export async function updateLetter(data: LetterData) {
   const updatedData = {
     ...data,
     department_id: data.department_id.map((id) => Number(id)),
+    division_id: data.division_id.map((id) => Number(id)),
+    deputy_id: data.deputy_id.map((id) => Number(id)),
   };
-
-  console.log("data in hooks : ", updatedData);
 
   try {
     const res = await fetch(`${process.env.ROOT_URL}/api/letter`, {

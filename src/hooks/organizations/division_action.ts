@@ -46,7 +46,7 @@ export async function get_division(): Promise<Division_Response> {
       data: response_data.data,
     };
   } catch (error: any) {
-    console.error("Error fetching departments:", error);
+    console.error("Error fetching division:", error);
     return {
       status: false,
       message: error.message,
@@ -66,7 +66,7 @@ export async function find_division(id: number) {
 
   try {
     const res = await fetch(
-      `${process.env.ROOT_URL}/api/divisions?division_id=${id}`,
+      `${process.env.ROOT_URL}/api/division?division_id=${id}`,
       {
         method: "GET",
         headers: {
@@ -86,6 +86,45 @@ export async function find_division(id: number) {
     };
   } catch (error: any) {
     console.error("Error fetching departments:", error);
+    return {
+      status: false,
+      message: error.message,
+    };
+  }
+}
+
+export async function find_division_by_deputy(id: number) {
+  if (!tokenParsed) {
+    return {
+      status: false,
+      message: "No user token found in cookies.",
+    };
+  }
+
+  const token = tokenParsed.token;
+
+  try {
+    const res = await fetch(
+      `${process.env.ROOT_URL}/api/division?deputy_id=${id}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!res.ok) throw new Error(`Http error! Status : ${res.status}`);
+
+    const response_data = await res.json();
+
+    return {
+      status: true,
+      data: response_data.data,
+    };
+  } catch (error: any) {
+    console.error("Error fetching division:", error);
     return {
       status: false,
       message: error.message,

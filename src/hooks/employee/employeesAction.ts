@@ -11,7 +11,9 @@ export interface Employee {
   phone_number: string;
   status?: string;
   address: string;
-  department_id: number;
+  department_id?: number | null;
+  deputy_id?: number | null;
+  division_id?: number | null;
   employee_type_id: number;
 }
 

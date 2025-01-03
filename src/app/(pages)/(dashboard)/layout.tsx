@@ -7,11 +7,20 @@ export default function DashboardLayoutServer({
   children: React.ReactNode;
 }) {
   const cookieStore = cookies();
-  const user = cookieStore.get("USER");
-  const employeeTypeId = user
-    ? JSON.parse(user.value).data.employee_type_id
-    : null;
-  const employeeId = user ? JSON.parse(user!.value).data.employee_id : null;
+  const userCookie = cookieStore.get("USER");
+
+  let employeeTypeId = null;
+  let employeeId = null;
+
+  if (userCookie && userCookie.value) {
+    try {
+      const userData = JSON.parse(userCookie.value);
+      employeeTypeId = userData?.data?.employee_type_id || null;
+      employeeId = userData?.data?.employee_id || null;
+    } catch (error) {
+      console.error("Error parsing USER cookie:", error);
+    }
+  }
 
   return (
     <DashboardLayoutClient

@@ -29,10 +29,20 @@ import {
 import { useRouter } from "next/navigation";
 import findAction, { Employee } from "@/hooks/employee/findAction";
 import { updateAction } from "@/hooks/employee/employeesAction";
+
 import {
   getDepartments,
   Department,
 } from "@/hooks/organizations/department_action";
+
+import { Deputy, get_deputy } from "@/hooks/organizations/deputy_action";
+
+import {
+  Division,
+  get_division,
+  find_division_by_deputy,
+} from "@/hooks/organizations/division_action";
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export default function Page({ params }: { params: { id: string } }) {
@@ -43,12 +53,15 @@ export default function Page({ params }: { params: { id: string } }) {
   const [emailEmployee, setEmailEmployee] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState<string>("");
   const [gender, setGender] = useState("");
-  const [departments, setDepartments] = useState<Department[]>([]);
+  const [department, setDepartment] = useState<Department[]>([]);
+  const [deputy, setDeputy] = useState<Deputy[]>([]);
+  const [division, setDivision] = useState<Division[]>([]);
   const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState<string>("");
-  const [selectedDepartment, setSelectedDepartment] = useState<number | null>(
-    null
-  );
+  const [selectOrganization, setOrganization] = useState("");
+  const [selectedDepartment, setSelectedDepartment] = useState<number | null>();
+  const [selectedDivision, setSelectedDivision] = useState<number | null>();
+  const [selectedDeputy, setSelectedDeputy] = useState<number | null>();
   const [loader, setLoader] = useState(false);
   const [employeeType, setEmployeeType] = useState<string | undefined>();
   const router = useRouter();
@@ -70,22 +83,63 @@ export default function Page({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     const fetchDepartments = async () => {
-      const res = await getDepartments();
-      if (res.status) {
-        setDepartments(res.data || []);
-      } else {
-        console.error("Failed to fetch departments:", res.message);
+      let res;
+      if (selectOrganization === "Department") {
+        res = await getDepartments();
+        if (res?.status) {
+          setDepartment(res.data || []);
+        } else {
+          console.error("Failed to fetch departments:", res?.message);
+        }
+      }
+      if (selectOrganization === "Division") {
+        let res;
+        if (employee?.deputy_id != null) {
+          res = await find_division_by_deputy(employee.deputy_id);
+        } else {
+          res = await get_division();
+        }
+
+        if (res?.status) {
+          setDivision(res.data || []);
+        } else {
+          console.error("Failed to fetch division:", res?.message);
+        }
+      }
+      if (selectOrganization === "Deputy") {
+        res = await get_deputy();
+        if (res?.status) {
+          setDeputy(res.data || []);
+        } else {
+          console.error("Failed to fetch deputy:", res?.message);
+        }
       }
     };
     fetchDepartments();
-  }, [id]);
+  }, [selectOrganization, employee?.deputy_id]);
 
-  const matchedDepartment = () => {
-    const departmentFound = departments.find(
-      (dept) => dept.department_id === selectedDepartment
-    );
-    return departmentFound ? departmentFound.department_name : null;
-  };
+  // const matchedDepartment = () => {
+  //   if (selectOrganization === "Department") {
+  //     const departmentFound = department.find(
+  //       (dept) => dept.department_id === selectedDepartment
+  //     );
+  //     return departmentFound ? departmentFound.department_name : null;
+  //   }
+
+  //   if (selectOrganization === "Deputy") {
+  //     const deputy_found = deputy.find(
+  //       (dep) => dep.deputy_id === selectedDeputy
+  //     );
+  //     return deputy_found ? deputy_found.deputy_name : null;
+  //   }
+
+  //   if (selectOrganization === "Division") {
+  //     const division_found = division.find(
+  //       (dep) => dep.division_id === selectedDivision
+  //     );
+  //     return division_found ? division_found.division_name : null;
+  //   }
+  // };
 
   const matchedEmployeeType = () => {
     if (!employee) return null;
@@ -103,7 +157,19 @@ export default function Page({ params }: { params: { id: string } }) {
       try {
         const res = await findAction(id);
         if (res.success) {
+          if (res.data.department_id != null) {
+            setOrganization("Department");
+          }
+          if (res.data.deputy_id != null) {
+            setOrganization("Deputy");
+          }
+          if (res.data.division_id != null) {
+            setOrganization("Division");
+          }
           setEmployee(res.data);
+          setSelectedDepartment(res.data.department_id);
+          setSelectedDeputy(res.data.deputy_id);
+          setSelectedDivision(res.data.division_id);
           setSelectedDepartment(res.data.department_id);
           setEmployeeName(res.data.employee_name);
           setAddressEmployee(res.data.address);
@@ -124,7 +190,7 @@ export default function Page({ params }: { params: { id: string } }) {
     };
 
     fetchData();
-  }, [id]);
+  }, [id, employee?.deputy_id]);
 
   const handleSubmit = async () => {
     setLoader(true);
@@ -135,7 +201,18 @@ export default function Page({ params }: { params: { id: string } }) {
       address: addressEmployee || employee!.address,
       phone_number: phoneNumberEmployee || employee!.phone_number,
       email: emailEmployee || employee!.email,
-      department_id: selectedDepartment || employee!.department_id,
+      department_id:
+        selectedDepartment == null
+          ? selectedDepartment
+          : selectedDepartment || employee!.department_id,
+      division_id:
+        selectedDivision == null
+          ? selectedDivision
+          : selectedDivision || employee!.division_id,
+      deputy_id:
+        selectedDeputy == null
+          ? selectedDeputy
+          : selectedDeputy || employee!.deputy_id,
       employee_type_id:
         Number(employeeType) || Number(employee!.employee_type_id),
       gender: gender || employee!.gender,
@@ -303,30 +380,101 @@ export default function Page({ params }: { params: { id: string } }) {
             </div>
           </div>
           <div className="grid grid-cols-2 space-x-5">
-            <div>
-              <Label htmlFor="department">Department</Label>
-              <Select
-                value={selectedDepartment?.toString() || ""}
-                onValueChange={(value) => setSelectedDepartment(Number(value))}
-              >
-                <SelectTrigger
-                  id="department"
-                  className="mt-[6px] h-10 border border-gray-300 focus:border-blue-500 focus:outline-none"
-                >
-                  <SelectValue placeholder={matchedDepartment()} />
-                </SelectTrigger>
-                <SelectContent>
-                  {departments.map((value) => (
-                    <SelectItem
-                      key={value.department_id}
-                      value={value.department_id.toString()}
+            {selectOrganization.length === 0 && (
+              <div>
+                <Label htmlFor="organization">
+                  Select Organization <span className="text-red-500">*</span>
+                </Label>
+                <div className="grid grid-cols-3 space-x-5 mt-2.5">
+                  {["Deputy", "Division", "Department"].map((value) => (
+                    <Button
+                      key={value}
+                      onClick={() => setOrganization(value.toString())}
                     >
-                      {value.department_name}
-                    </SelectItem>
+                      {value}
+                    </Button>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
+                </div>
+              </div>
+            )}
+            {selectOrganization && (
+              <div>
+                <Label htmlFor={selectOrganization}>
+                  {selectOrganization} <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  value={
+                    selectOrganization === "Department"
+                      ? selectedDepartment?.toString()
+                      : selectOrganization === "Division"
+                      ? selectedDivision?.toString()
+                      : selectedDeputy?.toString()
+                  }
+                  onValueChange={(value) => {
+                    if (selectOrganization === "Department") {
+                      setSelectedDepartment(
+                        Number(value) === 0 ? null : Number(value)
+                      );
+                    } else if (selectOrganization === "Division") {
+                      setSelectedDivision(
+                        Number(value) === 0 ? null : Number(value)
+                      );
+                    } else if (selectOrganization === "Deputy") {
+                      setSelectedDeputy(
+                        Number(value) === 0 ? null : Number(value)
+                      );
+                    }
+                  }}
+                >
+                  <SelectTrigger
+                    id={selectOrganization}
+                    className={`mt-[6px] h-10 border  focus:border-blue-500 focus:outline-none`}
+                  >
+                    <SelectValue
+                      placeholder={`selected ${selectOrganization}`}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">Default Value</SelectItem>
+                    {selectOrganization === "Department"
+                      ? department.map((value) => (
+                          <SelectItem
+                            key={value.department_id}
+                            value={value.department_id.toString()}
+                          >
+                            {value.department_name}
+                          </SelectItem>
+                        ))
+                      : selectOrganization === "Division"
+                      ? division.map((value) => (
+                          <SelectItem
+                            key={value.division_id}
+                            value={value.division_id.toString()}
+                          >
+                            {value.division_name}
+                          </SelectItem>
+                        ))
+                      : deputy.map((value) => (
+                          <SelectItem
+                            key={value.deputy_id}
+                            value={value.deputy_id.toString()}
+                          >
+                            {value.deputy_name}
+                          </SelectItem>
+                        ))}
+                  </SelectContent>
+                </Select>
+                <div className="mt-4">
+                  <Button
+                    type="button"
+                    onClick={() => setOrganization("")}
+                    className="text-sm"
+                  >
+                    Select Organization
+                  </Button>
+                </div>
+              </div>
+            )}
             <div>
               <Label htmlFor="employee_type">Employee Type</Label>
               <Select value={employeeType} onValueChange={setEmployeeType}>

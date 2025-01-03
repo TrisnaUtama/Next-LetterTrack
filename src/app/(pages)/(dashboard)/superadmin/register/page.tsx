@@ -29,10 +29,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+
 import {
   Department,
   getDepartments,
 } from "@/hooks/organizations/department_action";
+
+import { Deputy, get_deputy } from "@/hooks/organizations/deputy_action";
+
+import { Division, get_division } from "@/hooks/organizations/division_action";
 
 export default function Page() {
   const [employeeName, setEmployeeName] = useState("");
@@ -43,13 +48,17 @@ export default function Page() {
   const [gender, setGender] = useState("");
   const [password, setPassword] = useState<string>("");
   const [department, setDepartment] = useState<Department[]>([]);
+  const [deputy, setDeputy] = useState<Deputy[]>([]);
+  const [division, setDivision] = useState<Division[]>([]);
   const [employeeType, setEmployeeType] = useState<string | undefined>();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [selectedDepartment, setSelectedDepartment] = useState<number | null>(
-    null
-  );
+  const [selectOrganization, setOrganization] = useState("");
+  const [selectedDepartment, setSelectedDepartment] = useState<number | null>();
+  const [selectedDivision, setSelectedDivision] = useState<number | null>();
+  const [selectedDeputy, setSelectedDeputy] = useState<number | null>();
+
   const router = useRouter();
   const { toast } = useToast();
 
@@ -66,15 +75,34 @@ export default function Page() {
 
   useEffect(() => {
     const fetchDepartments = async () => {
-      const res = await getDepartments();
-      if (res.status) {
-        setDepartment(res.data || []);
-      } else {
-        console.error("Failed to fetch departments:", res.message);
+      let res;
+      if (selectOrganization === "Department") {
+        res = await getDepartments();
+        if (res?.status) {
+          setDepartment(res.data || []);
+        } else {
+          console.error("Failed to fetch departments:", res?.message);
+        }
+      }
+      if (selectOrganization === "Division") {
+        res = await get_division();
+        if (res?.status) {
+          setDivision(res.data || []);
+        } else {
+          console.error("Failed to fetch division:", res?.message);
+        }
+      }
+      if (selectOrganization === "Deputy") {
+        res = await get_deputy();
+        if (res?.status) {
+          setDeputy(res.data || []);
+        } else {
+          console.error("Failed to fetch deputy:", res?.message);
+        }
       }
     };
     fetchDepartments();
-  }, []);
+  }, [selectOrganization]);
 
   const handleCheckedFormField = () => {
     const newErrors: Record<string, string> = {};
@@ -86,7 +114,6 @@ export default function Page() {
     if (!emailEmployee) newErrors.email = "Email is required.";
     if (!phoneNumberEmployee)
       newErrors.phoneNumber = "Phone Number is required.";
-    if (!selectedDepartment) newErrors.department = "Department is required.";
     if (!employeeType) newErrors.employeeType = "Employee Type is required.";
     if (!password) newErrors.password = "Password is required.";
 
@@ -111,6 +138,8 @@ export default function Page() {
       phone_number: phoneNumberEmployee,
       email: emailEmployee,
       department_id: Number(selectedDepartment),
+      division_id: Number(selectedDivision),
+      deputy_id: Number(selectedDeputy),
       employee_type_id: Number(employeeType),
       password: password,
       gender,
@@ -310,37 +339,94 @@ export default function Page() {
             </div>
           </div>
           <div className="grid grid-cols-2 space-x-5 mt-3">
-            <div>
-              <Label htmlFor="department">
-                Department <span className="text-red-500">*</span>
-              </Label>
-              <Select
-                value={selectedDepartment?.toString() || ""}
-                onValueChange={(value) => setSelectedDepartment(Number(value))}
-              >
-                <SelectTrigger
-                  id="department"
-                  className={`mt-[6px] h-10 border ${
-                    errors.department ? "border-red-500" : "border-gray-300"
-                  } focus:border-blue-500 focus:outline-none`}
-                >
-                  <SelectValue placeholder="Select Department" />
-                </SelectTrigger>
-                <SelectContent>
-                  {department.map((value) => (
-                    <SelectItem
-                      key={value.department_id}
-                      value={value.department_id.toString()}
+            {selectOrganization.length === 0 && (
+              <div>
+                <Label htmlFor="organization">
+                  Select Organization <span className="text-red-500">*</span>
+                </Label>
+                <div className="grid grid-cols-3 space-x-5 mt-2.5">
+                  {["Deputy", "Division", "Department"].map((value) => (
+                    <Button
+                      key={value}
+                      onClick={() => setOrganization(value.toString())}
                     >
-                      {value.department_name}
-                    </SelectItem>
+                      {value}
+                    </Button>
                   ))}
-                </SelectContent>
-              </Select>
-              {errors.department && (
-                <p className="text-red-500 text-sm">{errors.department}</p>
-              )}
-            </div>
+                </div>
+              </div>
+            )}
+            {selectOrganization && (
+              <div>
+                <Label htmlFor={selectOrganization}>
+                  {selectOrganization} <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  value={
+                    selectOrganization === "Department"
+                      ? selectedDepartment?.toString()
+                      : selectOrganization === "Division"
+                      ? selectedDivision?.toString()
+                      : selectedDeputy?.toString()
+                  }
+                  onValueChange={(value) =>
+                    selectOrganization === "Department"
+                      ? setSelectedDepartment(Number(value))
+                      : selectOrganization === "Division"
+                      ? setSelectedDivision(Number(value))
+                      : setSelectedDeputy(Number(value))
+                  }
+                >
+                  <SelectTrigger
+                    id={selectOrganization}
+                    className={`mt-[6px] h-10 border ${
+                      errors.department ? "border-red-500" : "border-gray-300"
+                    } focus:border-blue-500 focus:outline-none`}
+                  >
+                    <SelectValue
+                      placeholder={`selected ${selectOrganization}`}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {selectOrganization === "Department"
+                      ? department.map((value) => (
+                          <SelectItem
+                            key={value.department_id}
+                            value={value.department_id.toString()}
+                          >
+                            {value.department_name}
+                          </SelectItem>
+                        ))
+                      : selectOrganization === "Division"
+                      ? division.map((value) => (
+                          <SelectItem
+                            key={value.division_id}
+                            value={value.division_id.toString()}
+                          >
+                            {value.division_name}
+                          </SelectItem>
+                        ))
+                      : deputy.map((value) => (
+                          <SelectItem
+                            key={value.deputy_id}
+                            value={value.deputy_id.toString()}
+                          >
+                            {value.deputy_name}
+                          </SelectItem>
+                        ))}
+                  </SelectContent>
+                </Select>
+                <div className="mt-4">
+                  <Button
+                    type="button"
+                    onClick={() => setOrganization("")}
+                    className="text-sm"
+                  >
+                    Select Organization
+                  </Button>
+                </div>
+              </div>
+            )}
             <div>
               <Label htmlFor="employee_type">
                 Employee Type <span className="text-red-500">*</span>
@@ -368,40 +454,40 @@ export default function Page() {
             </div>
           </div>
         </div>
-        <div className="flex justify-end items-center p-5">
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                onClick={handleCheckedFormField}
-                disabled={isSubmitting}
-                className="mt-5 bg-gradient-to-r from-[#01557B] to-[#019BE1] p-2 rounded-lg text-white font-semibold text-sm hover:from-[#01547be2] hover:to-[#019ae1dc]"
-              >
-                Submit
-              </Button>
-            </AlertDialogTrigger>
-            {Object.entries(errors).length <= 0 && (
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. This action will create and
-                    add a new employee to the database.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <Button
-                    type="button"
-                    onClick={handleSubmit}
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? "Loading..." : "Continue"}
-                  </Button>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            )}
-          </AlertDialog>
-        </div>
+      </div>
+      <div className="flex justify-end items-center p-5">
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              onClick={handleCheckedFormField}
+              disabled={isSubmitting}
+              className="mt-5 bg-gradient-to-r from-[#01557B] to-[#019BE1] p-2 rounded-lg text-white font-semibold text-sm hover:from-[#01547be2] hover:to-[#019ae1dc]"
+            >
+              Submit
+            </Button>
+          </AlertDialogTrigger>
+          {Object.entries(errors).length <= 0 && (
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This action will create and add
+                  a new employee to the database.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <Button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Loading..." : "Continue"}
+                </Button>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          )}
+        </AlertDialog>
       </div>
     </div>
   );

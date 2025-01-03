@@ -15,6 +15,8 @@ export type Employee = {
   phone_number: string;
   status: string;
   department_id: number;
+  deputy_id: number;
+  division_id: number;
   address: string;
   employee_type_id: number;
 };

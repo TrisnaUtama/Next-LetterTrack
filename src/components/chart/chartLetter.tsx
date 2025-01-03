@@ -79,6 +79,8 @@ export default function ChartLetter() {
     }));
   };
 
+  console.log("seceter :",process.env.JWT_SECRET);
+
   return (
     <Card id="data" className="h-96">
       <CardHeader>

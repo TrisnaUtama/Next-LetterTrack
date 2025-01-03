@@ -35,6 +35,10 @@ import {
   getDepartments,
 } from "@/hooks/organizations/department_action";
 
+import { Deputy, get_deputy } from "@/hooks/organizations/deputy_action";
+
+import { Division, get_division } from "@/hooks/organizations/division_action";
+
 import { LetterData, addLetter } from "@/hooks/letter/letterAction";
 
 export default function AddLetter({ params }: { params: { id: number } }) {
@@ -44,33 +48,77 @@ export default function AddLetter({ params }: { params: { id: number } }) {
     subject: "",
     recipient: "",
     letter_type_id: 0,
-    department_id: [Number(params.id)],
-    login_user_department_id: params.id,
+    department_id: [0],
+    deputy_id: [0],
+    division_id: [0],
+    primary_organization_type: "",
+    primary_organization_id: 0,
   });
 
   const [departments, setDepartments] = useState<
     { label: string; value: string }[]
   >([]);
+  const [divisions, setDivisions] = useState<
+    { label: string; value: string }[]
+  >([]);
+  const [deputies, setDeputies] = useState<{ label: string; value: string }[]>(
+    []
+  );
+  const [mergedData, setMergedData] = useState<
+    { label: string; value: string }[]
+  >([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [selectOrganization, setOrganization] = useState<string>("");
+  const [selectOrganizationId, setOrganizationId] = useState<number>();
   const { toast } = useToast();
   const router = useRouter();
 
+  console.log(departments, deputies, divisions);
+
   useEffect(() => {
-    const fetchDepartments = async () => {
-      const res = await getDepartments();
-      if (res.status) {
+    const fetchOrganization = async () => {
+      const res_department = await getDepartments();
+      const res_division = await get_division();
+      const res_deputy = await get_deputy();
+      let mergedData: { label: string; value: string }[] = [];
+
+      if (res_department.status) {
         const transformedDepartments =
-          res.data?.map((dept: Department) => ({
+          res_department.data?.map((dept: Department) => ({
             label: dept.department_name,
             value: dept.department_id.toString(),
           })) || [];
+        mergedData = [...mergedData, ...transformedDepartments];
         setDepartments(transformedDepartments);
       } else {
-        console.error("Failed to fetch departments:", res.message);
+        console.error("Failed to fetch departments:", res_department.message);
       }
+      if (res_deputy.status) {
+        const transformed_deputy =
+          res_deputy.data?.map((dep: Deputy) => ({
+            label: dep.deputy_name,
+            value: dep.deputy_id.toString(),
+          })) || [];
+        mergedData = [...mergedData, ...transformed_deputy];
+        setDeputies(transformed_deputy);
+      } else {
+        console.error("Failed to fetch departments:", res_deputy.message);
+      }
+      if (res_division.status) {
+        const transformed_division =
+          res_division.data?.map((div: Division) => ({
+            label: div.division_name,
+            value: div.division_id.toString(),
+          })) || [];
+        mergedData = [...mergedData, ...transformed_division];
+        setDivisions(transformed_division);
+      } else {
+        console.error("Failed to fetch departments:", res_division.message);
+      }
+      setMergedData(mergedData);
     };
-    fetchDepartments();
+    fetchOrganization();
   }, []);
 
   const Letter_Type: Record<number, string> = {
@@ -85,6 +133,22 @@ export default function AddLetter({ params }: { params: { id: number } }) {
     setData((prevData) => ({
       ...prevData,
       [id]: value,
+    }));
+  };
+
+  const handleSelectLetterArrive = (value: string) => {
+    setOrganization(value);
+    setData((prevData) => ({
+      ...prevData,
+      primary_organization_type: value.toLowerCase(),
+    }));
+  };
+
+  const handleOrganizationId = (value: number) => {
+    setOrganizationId(value);
+    setData((prevData) => ({
+      ...prevData,
+      primary_organization_id: value,
     }));
   };
 
@@ -108,6 +172,20 @@ export default function AddLetter({ params }: { params: { id: number } }) {
       department_id: selected.map((id) => parseInt(id, 10)),
     }));
   };
+  const handleDeputyChange = (selected: string[]) => {
+    setData((prevData) => ({
+      ...prevData,
+      deputy_id: selected.map((id) => parseInt(id, 10)),
+    }));
+  };
+  const handleDivisionChange = (selected: string[]) => {
+    setData((prevData) => ({
+      ...prevData,
+      division_id: selected.map((id) => parseInt(id, 10)),
+    }));
+  };
+
+  console.log(data);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -117,8 +195,12 @@ export default function AddLetter({ params }: { params: { id: number } }) {
     if (data.letter_type_id === 0)
       newErrors.letter_type = "Letter type is required.";
     if (!data.subject) newErrors.subject = "Subject is required.";
-    if (data.department_id.length === 0)
-      newErrors.department_id = "At least one department must be selected.";
+    if (
+      data.department_id.length === 0 &&
+      data.deputy_id.length === 0 &&
+      data.division_id.length === 0
+    )
+      newErrors.department_id = "organization must be selected.";
 
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0)
@@ -151,7 +233,10 @@ export default function AddLetter({ params }: { params: { id: number } }) {
         recipient: "",
         letter_type_id: 0,
         department_id: [],
-        login_user_department_id: 0,
+        division_id: [],
+        deputy_id: [],
+        primary_organization_id: 0,
+        primary_organization_type: "",
       });
       router.push("/letter/");
     } else {
@@ -163,7 +248,6 @@ export default function AddLetter({ params }: { params: { id: number } }) {
     }
   };
 
-  console.log(data);
   return (
     <div className="mb-10">
       <div className="bg-white border-b-2 p-8">
@@ -222,10 +306,10 @@ export default function AddLetter({ params }: { params: { id: number } }) {
                   <SelectValue placeholder="Select Sender of the Letter" />
                 </SelectTrigger>
                 <SelectContent>
-                  {departments.map((value) => (
+                  {mergedData.map((value) => (
                     <SelectItem
                       disabled={value.value === params.id.toString()}
-                      key={value.value}
+                      key={value.label}
                       value={value.label}
                     >
                       {value.label}
@@ -256,6 +340,59 @@ export default function AddLetter({ params }: { params: { id: number } }) {
               )}
             </div>
           </div>
+          <div className="grid grid-cols-3 mt-4 space-x-10">
+            <div className="mt-0.5">
+              <Label htmlFor="department_id">Department</Label>
+              <MultiSelect
+                className={`mt-1 h-10 border ${
+                  errors.department_id ? "border-red-500" : "border-gray-300"
+                } focus:border-blue-500 focus:outline-none`}
+                options={departments}
+                onValueChange={handleDepartmentChange}
+                placeholder="Select Department"
+                variant="inverted"
+                animation={2}
+                maxCount={3}
+              />
+              {errors.department_id && (
+                <p className="text-red-500 text-sm">{errors.department_id}</p>
+              )}
+            </div>
+            <div className="mt-0.5">
+              <Label htmlFor="division_id">Division</Label>
+              <MultiSelect
+                className={`mt-1 h-10 border ${
+                  errors.division_id ? "border-red-500" : "border-gray-300"
+                } focus:border-blue-500 focus:outline-none`}
+                options={divisions}
+                onValueChange={handleDivisionChange}
+                placeholder="Select Division"
+                variant="inverted"
+                animation={2}
+                maxCount={3}
+              />
+              {errors.division_id && (
+                <p className="text-red-500 text-sm">{errors.division_id}</p>
+              )}
+            </div>
+            <div className="mt-0.5">
+              <Label htmlFor="deputy_id">Deputy</Label>
+              <MultiSelect
+                className={`mt-1 h-10 border ${
+                  errors.deputy_id ? "border-red-500" : "border-gray-300"
+                } focus:border-blue-500 focus:outline-none`}
+                options={deputies}
+                onValueChange={handleDeputyChange}
+                placeholder="Select Deputy"
+                variant="inverted"
+                animation={2}
+                maxCount={3}
+              />
+              {errors.deputy_id && (
+                <p className="text-red-500 text-sm">{errors.deputy_id}</p>
+              )}
+            </div>
+          </div>
           <div className="grid grid-cols-2 mt-4 space-x-10">
             <div>
               <Label htmlFor="letter_type">
@@ -281,28 +418,85 @@ export default function AddLetter({ params }: { params: { id: number } }) {
                 <p className="text-red-500 text-sm">{errors.letter_type}</p>
               )}
             </div>
-            <div className="mt-0.5">
-              <Label htmlFor="department_id">
-                Department <span className="text-red-500">*</span>
-              </Label>
-              <MultiSelect
-                className={`mt-1 h-10 border ${
-                  errors.department_id ? "border-red-500" : "border-gray-300"
-                } focus:border-blue-500 focus:outline-none`}
-                options={departments}
-                onValueChange={handleDepartmentChange}
-                defaultValue={data.department_id.map(String)}
-                placeholder="Select Department"
-                variant="inverted"
-                animation={2}
-                maxCount={3}
-              />
-              {errors.department_id && (
-                <p className="text-red-500 text-sm">{errors.department_id}</p>
-              )}
-            </div>
+            {selectOrganization.length === 0 && (
+              <div>
+                <Label htmlFor="organization">
+                  Select Letter to Arrive{" "}
+                  <span className="text-red-500">*</span>
+                </Label>
+                <div className="grid grid-cols-3 space-x-5 mt-2.5">
+                  {["Deputy", "Division", "Department"].map((value) => (
+                    <Button
+                      key={value.toLowerCase()}
+                      onClick={() => handleSelectLetterArrive(value)}
+                    >
+                      {value}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {selectOrganization && (
+              <div>
+                <Label htmlFor={selectOrganization}>
+                  {selectOrganization} <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  value={selectOrganizationId?.toString()}
+                  onValueChange={(value) => handleOrganizationId(Number(value))}
+                >
+                  <SelectTrigger
+                    id={selectOrganization}
+                    className={`mt-[6px] h-10 border ${
+                      errors.department ? "border-red-500" : "border-gray-300"
+                    } focus:border-blue-500 focus:outline-none`}
+                  >
+                    <SelectValue
+                      placeholder={`selected ${selectOrganization}`}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {selectOrganization === "Department"
+                      ? departments.map((value) => (
+                          <SelectItem
+                            key={value.label}
+                            value={value.value.toString()}
+                          >
+                            {value.label}
+                          </SelectItem>
+                        ))
+                      : selectOrganization === "Division"
+                      ? divisions.map((value) => (
+                          <SelectItem
+                            key={value.label}
+                            value={value.value.toString()}
+                          >
+                            {value.label}
+                          </SelectItem>
+                        ))
+                      : deputies.map((value) => (
+                          <SelectItem
+                            key={value.label}
+                            value={value.value.toString()}
+                          >
+                            {value.label}
+                          </SelectItem>
+                        ))}
+                  </SelectContent>
+                </Select>
+                <div className="mt-4">
+                  <Button
+                    type="button"
+                    onClick={() => setOrganization("")}
+                    className="text-sm"
+                  >
+                    Select Organization
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
-          <div className="grid mt-4 space-x-10">
+          <div className="grid  mt-4 space-x-10">
             <div>
               <Label htmlFor="subject">
                 Subject <span className="text-red-500">*</span>

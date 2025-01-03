@@ -48,6 +48,8 @@ import {
 } from "@/hooks/organizations/department_action";
 
 import ConfirmationDialog from "@/components/ConfirmationDialog";
+import { Deputy, get_deputy } from "@/hooks/organizations/deputy_action";
+import { Division, get_division } from "@/hooks/organizations/division_action";
 
 export type EmployeeStatus = "ACTIVE" | "UNACTIVE";
 export type Type = 1 | 2 | 3 | 4;
@@ -55,6 +57,8 @@ export type Type = 1 | 2 | 3 | 4;
 export default function EnhancedDataTable() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [deputys, setDeputy] = useState<Deputy[]>([]);
+  const [divisions, setDivision] = useState<Division[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [confirmationOpen, setConfirmationOpen] = useState(false);
@@ -72,8 +76,12 @@ export default function EnhancedDataTable() {
   useEffect(() => {
     const fetchDepartments = async () => {
       const res = await getDepartments();
-      if (res.status) {
+      const res_deputy = await get_deputy();
+      const res_division = await get_division();
+      if (res.status || res_deputy.status || res_division.status) {
         setDepartments(res.data || []);
+        setDeputy(res_deputy.data || []);
+        setDivision(res_division.data || []);
       } else {
         console.error("Failed to fetch departments:", res.message);
       }
@@ -214,6 +222,36 @@ export default function EnhancedDataTable() {
           departments.find((dep) => dep.department_id === departmentId)
             ?.department_name || "Unknown";
         return <div className="text-center">{departmentName}</div>;
+      },
+      filterFn: (row, columnId, value) => {
+        const departmentId = row.getValue(columnId);
+        return value === "" || departmentId === Number(value);
+      },
+    },
+    {
+      accessorKey: "deputy_id",
+      header: () => <div className="text-center">Deputy</div>,
+      cell: ({ row }) => {
+        const deputyId = row.getValue("deputy_id") as number;
+        const deputy_name =
+          deputys.find((dep) => dep.deputy_id === deputyId)?.deputy_name ||
+          "Unknown";
+        return <div className="text-center">{deputy_name}</div>;
+      },
+      filterFn: (row, columnId, value) => {
+        const departmentId = row.getValue(columnId);
+        return value === "" || departmentId === Number(value);
+      },
+    },
+    {
+      accessorKey: "division_id",
+      header: () => <div className="text-center">Division</div>,
+      cell: ({ row }) => {
+        const divisionId = row.getValue("division_id") as number;
+        const division_name =
+          divisions.find((div) => div.division_id === divisionId)
+            ?.division_name || "Unknown";
+        return <div className="text-center">{division_name}</div>;
       },
       filterFn: (row, columnId, value) => {
         const departmentId = row.getValue(columnId);

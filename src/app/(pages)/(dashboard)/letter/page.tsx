@@ -42,7 +42,6 @@ import {
   Mail,
   CheckCircle2,
   XCircle,
-  CloudFog,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import LetterDetailDialog from "@/components/LetterDetailDialog/Dialog";
@@ -100,6 +99,8 @@ export default function EnhancedDataTable() {
     ARRIVE: "ARRIVE",
     SIGNED: "SIGNED",
   };
+
+  const uniqueLetterIds = new Set(letter.map((sig) => sig.letter_id));
 
   const columns: ColumnDef<Letter>[] = [
     {
@@ -239,6 +240,54 @@ export default function EnhancedDataTable() {
       ),
     },
     {
+      accessorKey: "organization",
+      header: ({ column }) => (
+        <div className="flex justify-center items-center">
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="font-semibold text-gray-700 hover:bg-gray-100"
+          >
+            Organization
+            <CaretSortIcon className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="text-center text-gray-600 max-w-xs truncate">
+          <Badge
+            className={`p-2 ${
+              row.original.Deputy
+                ? "bg-gray-400 hover:bg-gray-500"
+                : row.original.Division
+                ? "bg-blue-100 text-blue-800 hover:bg-blue-200 hover:text-blue-800 rounded-md"
+                : "bg-green-100 text-green-800 hover:bg-green-200 hover:text-green-900"
+            }`}
+          >
+            {row.original.Deputy
+              ? row.original.Deputy.deputy_name
+              : row.original.Division
+              ? row.original.Division.division_name
+              : row.original.department.department_name}
+          </Badge>
+        </div>
+      ),
+      sortingFn: (a, b) => {
+        const valueA =
+          a.original.Deputy?.deputy_name ||
+          a.original.Division?.division_name ||
+          a.original.department?.department_name ||
+          "";
+
+        const valueB =
+          b.original.Deputy?.deputy_name ||
+          b.original.Division?.division_name ||
+          b.original.department?.department_name ||
+          "";
+        return valueA.localeCompare(valueB);
+      },
+    },
+    {
       accessorKey: "status_signed",
       header: ({ column }) => (
         <div className="flex justify-center items-center">
@@ -317,8 +366,8 @@ export default function EnhancedDataTable() {
                 Copy Letter ID
               </DropdownMenuItem>
 
-              {letter.status == "ARRIVE" &&
-                employeeLogin?.employee_type_id != 4 && (
+              {employeeLogin?.employee_type_id != 4 &&
+                employeeLogin?.employee_type_id != 2 && (
                   <div>
                     <DropdownMenuSeparator />
                     <Link
@@ -361,16 +410,21 @@ export default function EnhancedDataTable() {
               </DropdownMenuItem>
             </DropdownMenuContent>
             {/* Dialog Detail Letter */}
-            {detailLetterOpen && <LetterDetailDialog letter={letter} />}
+            {detailLetterOpen && (
+              <LetterDetailDialog
+                letter={letter}
+                onClose={() => setDetailLetterOpen(false)}
+              />
+            )}
             {/* Dialog Sign Letter */}
             {isOpen && (
               <SignLetterDialog
                 letter_id={row.original.letter_id}
                 onClose={() => setIsOpen(false)}
                 signature_id={Number(row.original.signature_id)}
-                department_id_current={Number(
-                  row.original.department.department_id
-                )}
+                department_id_current={Number(letter.department?.department_id)}
+                division_id_current={Number(letter.Division?.division_id)}
+                deputy_id_current={Number(letter.Deputy?.deputy_id)}
               />
             )}
           </DropdownMenu>
@@ -418,7 +472,7 @@ export default function EnhancedDataTable() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Total Letters</p>
-              <p className="text-2xl font-semibold">{letter.length}</p>
+              <p className="text-2xl font-semibold">{uniqueLetterIds.size}</p>
             </div>
             <Mail className="h-10 w-10 text-blue-500 transition-transform transform hover:scale-110" />
           </div>
@@ -441,7 +495,11 @@ export default function EnhancedDataTable() {
             <div>
               <p className="text-sm text-gray-500">Completed</p>
               <p className="text-2xl font-semibold">
-                {letter.filter((l) => l.letter.status === "FINISH").length}
+                {
+                  letter.filter(
+                    (l) => l.letter.status === "FINISH" && uniqueLetterIds
+                  ).length
+                }
               </p>
             </div>
             <CheckCircle2 className="h-10 w-10 text-green-500 transition-transform transform hover:scale-110" />

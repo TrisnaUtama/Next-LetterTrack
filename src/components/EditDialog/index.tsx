@@ -7,6 +7,14 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
 import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+
+import {
   Department,
   updateDepartment,
   findDepartment,
@@ -15,18 +23,20 @@ import {
 import {
   Deputy,
   update_deputy,
+  get_deputy,
   find_deputy,
 } from "@/hooks/organizations/deputy_action";
 
 import {
   Division,
   update_division,
+  get_division,
   find_division,
 } from "@/hooks/organizations/division_action";
 
 import { useRouter } from "next/navigation";
 
-export default function EditDepartmentDialog({
+export default function EditDialog({
   onClose,
   id,
   type,
@@ -39,6 +49,7 @@ export default function EditDepartmentDialog({
     department_id: 0,
     department_name: "",
     department_head: "",
+    division_id: 0,
   });
 
   const [deputy, setDeputy] = useState<Deputy>({
@@ -56,8 +67,34 @@ export default function EditDepartmentDialog({
 
   const [loader, setLoader] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [deputies, setDeputies] = useState<Deputy[]>([]);
+  const [divisions, setDivisions] = useState<Division[]>([]);
   const { toast } = useToast();
   const router = useRouter();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        if (type === "Division") {
+          const deputyData = await get_deputy();
+          setDeputies(deputyData?.data ?? []);
+        }
+
+        if (type === "Department") {
+          const divisionData = await get_division();
+          setDivisions(divisionData?.data ?? []);
+        }
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to fetch the necessary data!",
+        });
+      }
+    };
+
+    fetchData();
+  }, [type, toast]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -70,19 +107,47 @@ export default function EditDepartmentDialog({
 
         if (type === "Deputy") {
           res = await find_deputy(id);
-          setDeputy(res?.data[0]);
+          setDeputy(res?.data);
         }
 
         if (type === "Division") {
           res = await find_division(id);
-          setDivision(res?.data[0]);
+          setDivision(res?.data);
         }
       } catch (error: any) {
         return error.message;
       }
     };
     fetchData();
-  }, [id]);
+  }, [id, type]);
+
+  const handleSelectChange = (value: string) => {
+    const selectValue = Number(value);
+
+    if (value === "0") {
+      setDepartment((prevDepartment) => ({
+        ...prevDepartment,
+        division_id: undefined,
+      }));
+
+      setDivision((prevDivision) => ({
+        ...prevDivision,
+        deputy_id: undefined,
+      }));
+    }
+
+    if (type === "Department") {
+      setDepartment((prevDepartment) => ({
+        ...prevDepartment,
+        division_id: selectValue,
+      }));
+    } else if (type === "Division") {
+      setDivision((prevDivision) => ({
+        ...prevDivision,
+        deputy_id: selectValue,
+      }));
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -275,6 +340,65 @@ export default function EditDepartmentDialog({
             className="mb-1 h-10 p-3 font-medium border focus:border-blue-500 focus:outline-none"
           />
         </div>
+
+        {(type === "Department" || type === "Division") && (
+          <div className="mb-4">
+            <Label
+              htmlFor={
+                type === "Department"
+                  ? "department_division_id"
+                  : "division_deputy_id"
+              }
+            >
+              {type === "Department" ? "Division" : "Deputy"}
+            </Label>
+            <Select
+              value={
+                type === "Department"
+                  ? department.division_id?.toString()
+                  : division.deputy_id?.toString()
+              }
+              onValueChange={handleSelectChange}
+            >
+              <SelectTrigger
+                id={
+                  type === "Department"
+                    ? "department_division_id"
+                    : "division_deputy_id"
+                }
+                className="h-10 border focus:border-blue-500 focus:outline-none"
+              >
+                <SelectValue
+                  placeholder={`Select ${
+                    type === "Department" ? "Division" : "Deputy"
+                  }`}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0">Default Value</SelectItem>
+                {type === "Department"
+                  ? divisions.map((item) => (
+                      <SelectItem
+                        key={item.division_id}
+                        value={item.division_id.toString()}
+                      >
+                        {item.division_name}
+                      </SelectItem>
+                    ))
+                  : type === "Division"
+                  ? deputies.map((item) => (
+                      <SelectItem
+                        key={item.deputy_id}
+                        value={item.deputy_id.toString()}
+                      >
+                        {item.deputy_name}
+                      </SelectItem>
+                    ))
+                  : null}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         <div className="flex justify-between">
           <Button variant="outline" onClick={onClose} className="mr-2">

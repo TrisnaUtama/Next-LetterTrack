@@ -9,7 +9,9 @@ export type Employee = {
   birth: string;
   email: string;
   phone_number: string;
-  department_id: number;
+  department_id?: number;
+  deputy_id?: number;
+  division_id?: number;
   employee_type_id: number;
   password: string;
 };

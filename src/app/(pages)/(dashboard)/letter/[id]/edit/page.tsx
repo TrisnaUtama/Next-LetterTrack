@@ -41,6 +41,10 @@ import {
   updateLetter,
 } from "@/hooks/letter/letterAction";
 
+import { Deputy, get_deputy } from "@/hooks/organizations/deputy_action";
+
+import { Division, get_division } from "@/hooks/organizations/division_action";
+
 export default function EditLetter({ params }: { params: { id: string } }) {
   const [data, setData] = useState<LetterData>({
     letter_id: params.id,
@@ -49,11 +53,20 @@ export default function EditLetter({ params }: { params: { id: string } }) {
     recipient: "",
     letter_type_id: 0,
     department_id: [],
+    deputy_id: [],
+    division_id: [],
   });
 
   const [departments, setDepartments] = useState<
     { label: string; value: string }[]
   >([]);
+  const [divisions, setDivisions] = useState<
+    { label: string; value: string }[]
+  >([]);
+  const [deputies, setDeputies] = useState<{ label: string; value: string }[]>(
+    []
+  );
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -77,34 +90,73 @@ export default function EditLetter({ params }: { params: { id: string } }) {
   }, []);
 
   useEffect(() => {
+    const fetchDeputies = async () => {
+      const res = await get_deputy();
+      if (res.status) {
+        const transformedDeputies =
+          res.data?.map((deputy: Deputy) => ({
+            label: deputy.deputy_name,
+            value: deputy.deputy_id.toString(),
+          })) || [];
+        setDeputies(transformedDeputies);
+      } else {
+        console.error("Failed to fetch deputies:", res.message);
+      }
+    };
+    fetchDeputies();
+  }, []);
+
+  useEffect(() => {
+    const fetchDivisions = async () => {
+      const res = await get_division();
+      if (res.status) {
+        const transformedDivisions =
+          res.data?.map((division: Division) => ({
+            label: division.division_name,
+            value: division.division_id.toString(),
+          })) || [];
+        setDivisions(transformedDivisions);
+      } else {
+        console.error("Failed to fetch divisions:", res.message);
+      }
+    };
+    fetchDivisions();
+  }, []);
+
+  useEffect(() => {
     const fetchLetter = async () => {
       const res = await getSpecificLetter(data.letter_id);
       if (res.status) {
         const letterData = res.data;
 
-        const departmentIds = letterData.Signature.map((sig: any) =>
-          sig.department_id.toString()
-        );
+        const departmentIds = letterData.Signature.filter(
+          (sig: any) => sig.department_id !== null
+        ).map((sig: any) => sig.department_id.toString());
 
-        const senderDepartment = departments.find(
-          (dept) => dept.label === letterData.sender
-        );
+        const deputyIds = letterData.Signature.filter(
+          (sig: any) => sig.deputy_id !== null
+        ).map((sig: any) => sig.deputy_id.toString());
+
+        const divisionIds = letterData.Signature.filter(
+          (sig: any) => sig.division_id !== null
+        ).map((sig: any) => sig.division_id.toString());
 
         setData({
           letter_id: letterData.letter_id,
-          sender: senderDepartment ? senderDepartment.label : "",
-          subject: letterData.subject,
-          recipient: letterData.recipient,
-          letter_type_id: letterData.letter_type_id,
-          department_id: departmentIds,
+          sender: letterData.sender || "",
+          subject: letterData.subject || "",
+          recipient: letterData.recipient || "",
+          letter_type_id: letterData.letter_type_id || 0,
+          department_id: departmentIds.length > 0 ? departmentIds : [""],
+          deputy_id: deputyIds.length > 0 ? deputyIds : [""],
+          division_id: divisionIds.length > 0 ? divisionIds : [""],
         });
       } else {
         console.error("Failed to fetch letter:", res.message);
       }
     };
-    if (departments.length > 0) {
-      fetchLetter();
-    }
+
+    fetchLetter();
   }, [data.letter_id, departments]);
 
   const Letter_Type: Record<number, string> = {
@@ -144,6 +196,22 @@ export default function EditLetter({ params }: { params: { id: string } }) {
       };
     });
   };
+  const handleDivisionChange = (selected: string[]) => {
+    setData((prevData) => {
+      return {
+        ...prevData,
+        division_id: selected.map((id) => parseInt(id, 10)),
+      };
+    });
+  };
+  const handleDeputyChange = (selected: string[]) => {
+    setData((prevData) => {
+      return {
+        ...prevData,
+        deputy_id: selected.map((id) => parseInt(id, 10)),
+      };
+    });
+  };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -153,8 +221,12 @@ export default function EditLetter({ params }: { params: { id: string } }) {
     if (data.letter_type_id === 0)
       newErrors.letter_type = "Letter type is required.";
     if (!data.subject) newErrors.subject = "Subject is required.";
-    if (data.department_id.length === 0)
-      newErrors.department_id = "At least one department is required.";
+    if (
+      data.department_id.length === 0 &&
+      data.deputy_id.length === 0 &&
+      data.division_id.length === 0
+    )
+      newErrors.department_id = "At least one organization is required.";
 
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0)
@@ -198,6 +270,10 @@ export default function EditLetter({ params }: { params: { id: string } }) {
       setLoading(false);
     }
   };
+
+  console.log(data);
+
+  const mergedOrganization = [...deputies, ...divisions, ...departments];
 
   return (
     <div className="mb-10">
@@ -259,14 +335,15 @@ export default function EditLetter({ params }: { params: { id: string } }) {
                 >
                   <SelectValue placeholder="Select Sender of the Letter">
                     {
-                      departments.find((dept) => dept.value === data.sender)
-                        ?.label
+                      mergedOrganization.find(
+                        (dept) => dept.label === data.sender
+                      )?.label
                     }
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {departments.map((dept) => (
-                    <SelectItem key={dept.value} value={dept.label}>
+                  {mergedOrganization.map((dept) => (
+                    <SelectItem key={dept.label} value={dept.label}>
                       {dept.label}
                     </SelectItem>
                   ))}
@@ -295,7 +372,7 @@ export default function EditLetter({ params }: { params: { id: string } }) {
               )}
             </div>
           </div>
-          <div className="grid grid-cols-2 mt-4 space-x-10">
+          <div className="grid grid-cols-1 mt-4 space-x-10">
             <div>
               <Label htmlFor="letter_type">
                 Letter Type <span className="text-red-500">*</span>
@@ -325,6 +402,8 @@ export default function EditLetter({ params }: { params: { id: string } }) {
                 <p className="text-red-500 text-sm">{errors.letter_type}</p>
               )}
             </div>
+          </div>
+          <div className="grid grid-cols-3 mt-4 space-x-10">
             <div className="mt-0.5">
               <Label htmlFor="department_id">
                 Department <span className="text-red-500">*</span>
@@ -339,8 +418,49 @@ export default function EditLetter({ params }: { params: { id: string } }) {
                   defaultValue={data.department_id.map(String)}
                   placeholder="Select Department"
                   variant="inverted"
-                  animation={2}
-                  maxCount={3}
+                  maxCount={1}
+                />
+              )}
+              {errors.department_id && (
+                <p className="text-red-500 text-sm">{errors.department_id}</p>
+              )}
+            </div>
+            <div className="mt-0.5">
+              <Label htmlFor="department_id">
+                Division <span className="text-red-500">*</span>
+              </Label>
+              {data.division_id.length > 0 && (
+                <MultiSelect
+                  className={`mt-1 h-10 border ${
+                    errors.department_id ? "border-red-500" : "border-gray-300"
+                  } focus:border-blue-500 focus:outline-none`}
+                  options={divisions}
+                  onValueChange={handleDivisionChange}
+                  defaultValue={data.division_id.map(String)}
+                  placeholder="Select Department"
+                  variant="inverted"
+                  maxCount={1}
+                />
+              )}
+              {errors.department_id && (
+                <p className="text-red-500 text-sm">{errors.department_id}</p>
+              )}
+            </div>
+            <div className="mt-0.5">
+              <Label htmlFor="department_id">
+                Deputy <span className="text-red-500">*</span>
+              </Label>
+              {data.deputy_id.length > 0 && (
+                <MultiSelect
+                  className={`mt-1 h-10 border ${
+                    errors.department_id ? "border-red-500" : "border-gray-300"
+                  } focus:border-blue-500 focus:outline-none`}
+                  options={deputies}
+                  onValueChange={handleDeputyChange}
+                  defaultValue={data.deputy_id.map(String)}
+                  placeholder="Select deputy"
+                  variant="inverted"
+                  maxCount={1}
                 />
               )}
               {errors.department_id && (

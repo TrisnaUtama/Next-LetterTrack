@@ -6,7 +6,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
-  const departmentId = searchParams.get("departmentId");
+  const deputy_id = searchParams.get("deputy_id");
+  const employee_type = searchParams.get("employee_type_id");
   const tokenResponse = await verifyToken(request);
 
   if (tokenResponse instanceof NextResponse) {
@@ -19,14 +20,32 @@ export async function GET(request: NextRequest) {
       { status: 401 }
     );
   }
-  if (!departmentId || isNaN(Number(departmentId))) {
-    return NextResponse.json(
-      { message: "Invalid department ID" },
-      { status: 400 }
-    );
-  }
 
   try {
+    let whereCondition = {};
+
+    if (Number(employee_type) != 1) {
+      whereCondition = {
+        OR: [
+          {
+            department: {
+              Division: {
+                deputy_id: Number(deputy_id),
+              },
+            },
+          },
+          {
+            deputy_id: Number(deputy_id),
+          },
+          {
+            Division: {
+              deputy_id: Number(deputy_id),
+            },
+          },
+        ],
+      };
+    }
+
     const data = await prisma.signature.findMany({
       select: {
         signature_id: true,
@@ -48,6 +67,18 @@ export async function GET(request: NextRequest) {
             },
           },
         },
+        Deputy: {
+          select: {
+            deputy_id: true,
+            deputy_name: true,
+          },
+        },
+        Division: {
+          select: {
+            division_id: true,
+            division_name: true,
+          },
+        },
         department: {
           select: {
             department_name: true,
@@ -55,15 +86,13 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-      where: {
-        department_id: Number(departmentId),
-      },
+      where: whereCondition,
     });
 
     if (!data || data.length === 0) {
       return NextResponse.json(
         {
-          message: "unsuccessfully retrieved letter data",
+          message: "No letter data found",
           data: data,
         },
         { status: 404 }
@@ -82,7 +111,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         message:
-          error.message || "an error occurred while processing the request",
+          error.message || "An error occurred while processing the request",
       },
       {
         status: 500,
@@ -101,8 +130,10 @@ export async function POST(request: NextRequest) {
     department_id,
     division_id,
     deputy_id,
-    login_user_department_id,
+    primary_organization_type,
+    primary_organization_id,
   } = await request.json();
+
   const tokenResponse = await verifyToken(request);
   if (tokenResponse instanceof NextResponse) {
     return tokenResponse;
@@ -121,10 +152,10 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  if (letter_id == existLetter?.letter_id) {
+  if (existLetter) {
     return NextResponse.json(
       {
-        message: "Letter id already exists ! ",
+        message: "Letter id already exists!",
       },
       {
         status: 400,
@@ -132,6 +163,58 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const createSignatures = () => {
+    const allSignatures = [];
+
+    if (deputy_id) {
+      allSignatures.push(
+        ...deputy_id.map((id: number) => ({
+          Deputy: {
+            connect: { deputy_id: id },
+          },
+          status:
+            id === primary_organization_id &&
+            primary_organization_type === "deputy"
+              ? "ARRIVE"
+              : "NOT_ARRIVE",
+        }))
+      );
+    }
+
+    if (division_id) {
+      allSignatures.push(
+        ...division_id.map((id: number) => ({
+          Division: {
+            connect: { division_id: id },
+          },
+          status:
+            id === primary_organization_id &&
+            primary_organization_type === "division"
+              ? "ARRIVE"
+              : "NOT_ARRIVE",
+        }))
+      );
+    }
+
+    if (department_id) {
+      allSignatures.push(
+        ...department_id.map((id: number) => ({
+          department: {
+            connect: { department_id: id },
+          },
+          status:
+            id === primary_organization_id &&
+            primary_organization_type === "department"
+              ? "ARRIVE"
+              : "NOT_ARRIVE",
+        }))
+      );
+    }
+
+    return allSignatures;
+  };
+
+  const signatures = createSignatures();
   try {
     const letter = await prisma.letter.create({
       data: {
@@ -142,29 +225,18 @@ export async function POST(request: NextRequest) {
         letter_type_id: letter_type_id,
         letter_date: new Date(),
         Signature: {
-          create: department_id.map((id: Number) => ({
-            department: {
-              connect: { department_id: id },
-            },
-            Division : {
-              
-            },
-            status: id == login_user_department_id ? "ARRIVE" : "NOT_ARRIVE",
-          })),
-        }
-        ,
+          create: signatures,
+        },
       },
     });
 
-    if (letter) {
-      return NextResponse.json(
-        {
-          message: "Successfully created new letter",
-          data: letter,
-        },
-        { status: 200 }
-      );
-    }
+    return NextResponse.json(
+      {
+        message: "Successfully created new letter",
+        data: letter,
+      },
+      { status: 200 }
+    );
   } catch (error: any) {
     console.error("Error During Creating letter: ", error.message);
     return NextResponse.json(
@@ -180,8 +252,16 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const { letter_id, sender, subject, recipient, letter_type, department_id } =
-    await request.json();
+  const {
+    letter_id,
+    sender,
+    subject,
+    recipient,
+    letter_type,
+    department_id,
+    division_id,
+    deputy_id,
+  } = await request.json();
 
   const tokenResponse = await verifyToken(request);
 
@@ -208,18 +288,49 @@ export async function PATCH(request: NextRequest) {
     });
 
     const deletedDepartment = existingSignatures.filter(
-      (signature) => !department_id.includes(signature.department_id)
+      (signature) =>
+        signature.department_id != null &&
+        !department_id.includes(signature.department_id)
     );
 
-    if (deletedDepartment.length > 0) {
-      const deletedSignatureIds = deletedDepartment.map(
+    const deletedDivision = existingSignatures.filter(
+      (signature) =>
+        signature.division_id != null &&
+        !division_id.includes(signature.division_id)
+    );
+
+    const deletedDeputy = existingSignatures.filter(
+      (signature) =>
+        signature.deputy_id != null && !deputy_id.includes(signature.deputy_id)
+    );
+
+    if (
+      deletedDepartment.length > 0 ||
+      deletedDivision.length > 0 ||
+      deletedDeputy.length > 0
+    ) {
+      const deletedDepartmentIds = deletedDepartment.map(
         (signature) => signature.signature_id
       );
+
+      const deletedDivisionIds = deletedDivision.map(
+        (signature) => signature.signature_id
+      );
+
+      const deletedDeputyIds = deletedDeputy.map(
+        (signature) => signature.signature_id
+      );
+
+      const mergedIds = [
+        ...deletedDepartmentIds,
+        ...deletedDivisionIds,
+        ...deletedDeputyIds,
+      ];
 
       await prisma.signature.deleteMany({
         where: {
           signature_id: {
-            in: deletedSignatureIds,
+            in: mergedIds,
           },
         },
       });
@@ -231,12 +342,42 @@ export async function PATCH(request: NextRequest) {
           (currentDeartment) => currentDeartment.department_id == newId
         )
     );
+    const newDivisionIds = division_id.filter(
+      (newId: number) =>
+        !existingSignatures.some(
+          (currentDeartment) => currentDeartment.division_id == newId
+        )
+    );
+    const newDeputyIds = deputy_id.filter(
+      (newId: number) =>
+        !existingSignatures.some(
+          (currentDeartment) => currentDeartment.deputy_id == newId
+        )
+    );
 
     if (newDepartmentIds.length > 0) {
       await prisma.signature.createMany({
         data: newDepartmentIds.map((newId: number) => ({
           letter_id: letter_id,
           department_id: newId,
+        })),
+      });
+    }
+
+    if (newDivisionIds.length > 0) {
+      await prisma.signature.createMany({
+        data: newDivisionIds.map((newId: number) => ({
+          letter_id: letter_id,
+          division_id: newId,
+        })),
+      });
+    }
+
+    if (newDeputyIds.length > 0) {
+      await prisma.signature.createMany({
+        data: newDeputyIds.map((newId: number) => ({
+          letter_id: letter_id,
+          deputy_id: newId,
         })),
       });
     }

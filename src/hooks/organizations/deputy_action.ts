@@ -65,7 +65,7 @@ export async function find_deputy(id: number) {
 
   try {
     const res = await fetch(
-      `${process.env.ROOT_URL}/api/deputys?deputy_id=${id}`,
+      `${process.env.ROOT_URL}/api/deputy?deputy_id=${id}`,
       {
         method: "GET",
         headers: {

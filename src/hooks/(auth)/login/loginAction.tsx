@@ -27,7 +27,6 @@ export default async function loginAction(
   if (!username || !password) {
     return { success: false, error: "Username and password are required" };
   }
-
   try {
     const res = await fetch(`${process.env.ROOT_URL}/api/login`, {
       method: "POST",
@@ -84,6 +83,7 @@ export async function userLogin() {
 
   const token = tokenParsed.token;
   const employee_id = tokenParsed.data.employee_id;
+
   try {
     const res = await fetch(
       `${process.env.ROOT_URL}/api/login?employee_id=${employee_id}`,

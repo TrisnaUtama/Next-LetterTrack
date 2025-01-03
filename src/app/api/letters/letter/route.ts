@@ -40,6 +40,8 @@ export async function GET(request: NextRequest) {
         Signature: {
           select: {
             department_id: true,
+            deputy_id: true,
+            division_id: true,
           },
         },
       },
