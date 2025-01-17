@@ -26,15 +26,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import { CaretSortIcon, DotsHorizontalIcon } from "@radix-ui/react-icons";
+import { CaretSortIcon } from "@radix-ui/react-icons";
 import {
   LoaderIcon,
   Search,
@@ -44,10 +36,9 @@ import {
   XCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import LetterDetailDialog from "@/components/LetterDetailDialog/Dialog";
-import SignLetterDialog from "@/components/SignedLetterDialog";
 import { getLetter, Letter } from "@/hooks/letter/letterAction";
 import { Employee, userLogin } from "@/hooks/(auth)/login/loginAction";
+import ActionsCell from "@/components/cell/cell";
 
 export default function EnhancedDataTable() {
   const [letter, setLetter] = useState<Letter[]>([]);
@@ -55,8 +46,6 @@ export default function EnhancedDataTable() {
   const [searchTerm, setSearchTerm] = useState("");
   const [letterFiltered, setLetterFiltered] = useState<Letter[]>([]);
   const [employeeLogin, setEmployeeLogin] = useState<Employee>();
-  const [detailLetterOpen, setDetailLetterOpen] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -332,104 +321,9 @@ export default function EnhancedDataTable() {
     {
       id: "actions",
       enableHiding: false,
-      cell: ({ row }) => {
-        const letter = row.original;
-
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                id="action"
-                variant="ghost"
-                className="h-8 w-8 p-0 hover:bg-gray-100 transition-colors duration-200"
-              >
-                <span className="sr-only">Open menu</span>
-                <DotsHorizontalIcon className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[160px]">
-              <DropdownMenuLabel className="text-center font-semibold">
-                Actions
-              </DropdownMenuLabel>
-              <DropdownMenuItem
-                id="copy-letter"
-                className="flex justify-center cursor-pointer hover:bg-gray-100 transition-colors duration-200"
-                onClick={() => {
-                  navigator.clipboard.writeText(letter.letter_id);
-                  toast({
-                    variant: "success",
-                    title: "Success Copying",
-                    description: `successfuly copy letter id ${letter.letter_id}`,
-                  });
-                }}
-              >
-                Copy Letter ID
-              </DropdownMenuItem>
-
-              {employeeLogin?.employee_type_id != 4 &&
-                employeeLogin?.employee_type_id != 2 && (
-                  <div>
-                    <DropdownMenuSeparator />
-                    <Link
-                      id="edit"
-                      href={`/letter/${letter.letter_id}/edit`}
-                      className="flex justify-center cursor-pointer hover:bg-gray-100 transition-colors duration-200 text-sm p-1.5 rounded-md"
-                    >
-                      Edit
-                    </Link>
-                  </div>
-                )}
-
-              {employeeLogin?.employee_type_id != 4 && (
-                <div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    id="signed"
-                    onClick={() => setIsOpen(true)}
-                    className="flex justify-center cursor-pointer hover:bg-gray-100 transition-colors duration-200"
-                    disabled={
-                      letter.status == "SIGNED" || letter.status == "NOT_ARRIVE"
-                    }
-                  >
-                    {letter.status == "SIGNED"
-                      ? "Already Signed"
-                      : letter.status == "NOT_ARRIVE"
-                      ? "Wait The Letter"
-                      : "Sign Letter"}
-                  </DropdownMenuItem>
-                </div>
-              )}
-
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                id="detail"
-                className="flex justify-center"
-                onSelect={() => setDetailLetterOpen(true)}
-              >
-                Detail Letter
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-            {/* Dialog Detail Letter */}
-            {detailLetterOpen && (
-              <LetterDetailDialog
-                letter={letter}
-                onClose={() => setDetailLetterOpen(false)}
-              />
-            )}
-            {/* Dialog Sign Letter */}
-            {isOpen && (
-              <SignLetterDialog
-                letter_id={row.original.letter_id}
-                onClose={() => setIsOpen(false)}
-                signature_id={Number(row.original.signature_id)}
-                department_id_current={Number(letter.department?.department_id)}
-                division_id_current={Number(letter.Division?.division_id)}
-                deputy_id_current={Number(letter.Deputy?.deputy_id)}
-              />
-            )}
-          </DropdownMenu>
-        );
-      },
+      cell: ({ row }) => (
+        <ActionsCell row={row} employeeLogin={employeeLogin!} />
+      ),
     },
   ];
 

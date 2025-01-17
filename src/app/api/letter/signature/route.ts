@@ -4,9 +4,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
-  const deputy_id = searchParams.get("deputy_id");
-  const tokenResponse = await verifyToken(request);
+  const letter_id = searchParams.get("letter_id");
 
+  const tokenResponse = await verifyToken(request);
   if (tokenResponse instanceof NextResponse) {
     return tokenResponse;
   }
@@ -18,45 +18,15 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  try {
-    const deputy_signature = await prisma.signature.findMany({
-      select: {
-        signature_id: true,
-        letter_id: true,
-        status: true,
-        descriptions: true,
-        signed_date: true,
-        letter: {
-          select: {
-            letter_date: true,
-            recipient: true,
-            sender: true,
-            subject: true,
-            status: true,
-            letter_type: {
-              select: {
-                letter_type: true,
-              },
-            },
-          },
-        },
-        Deputy: {
-          select: {
-            deputy_id: true,
-            deputy_name: true,
-          },
-        },
-      },
-      where: {
-        Deputy: {
-          NOT: {
-            deputy_id: undefined,
-          },
-        },
-      },
-    });
+  if (!letter_id) {
+    return NextResponse.json(
+      { message: "Missing or invalid letter_id parameter" },
+      { status: 400 }
+    );
+  }
 
-    const data = await prisma.signature.findMany({
+  try {
+    const signatures = await prisma.signature.findMany({
       select: {
         signature_id: true,
         letter_id: true,
@@ -91,58 +61,41 @@ export async function GET(request: NextRequest) {
         },
         department: {
           select: {
-            department_name: true,
             department_id: true,
+            department_name: true,
           },
         },
       },
       where: {
-        OR: [
-          {
-            department: {
-              Division: {
-                deputy_id: Number(deputy_id),
-              },
-            },
-          },
-          {
-            Division: {
-              deputy_id: Number(deputy_id),
-            },
-          },
-        ],
+        letter_id: letter_id,
       },
     });
 
-    if (!data || data.length === 0) {
+    if (!signatures || signatures.length === 0) {
       return NextResponse.json(
         {
-          message: "unsuccessfully retrieved letter data",
-          data: data,
+          message: "No signatures found for the given letter ID",
+          data: [],
         },
         { status: 404 }
       );
     }
 
-    const mergedData = [...deputy_signature, ...data];
-
     return NextResponse.json(
       {
-        message: "Successfully retrieved letter data",
-        data: mergedData,
+        message: "Successfully retrieved signatures",
+        data: signatures,
       },
       { status: 200 }
     );
   } catch (error: any) {
-    console.error("Error During Fetching data: ", error.message);
+    console.error("Error During Fetching Data: ", error.message);
     return NextResponse.json(
       {
         message:
-          error.message || "an error occurred while processing the request",
+          error.message || "An error occurred while processing the request",
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 }
@@ -178,17 +131,6 @@ export async function PATCH(request: NextRequest) {
   }
 
   try {
-    const dataUpdated = await prisma.signature.update({
-      where: {
-        signature_id: signature_id,
-      },
-      data: {
-        descriptions: descriptions,
-        signed_date: new Date(),
-        status: "SIGNED",
-      },
-    });
-
     await prisma.signature.updateMany({
       where: {
         letter_id: letter_id,
@@ -198,6 +140,17 @@ export async function PATCH(request: NextRequest) {
       },
       data: {
         status: "ARRIVE",
+      },
+    });
+
+    const dataUpdated = await prisma.signature.update({
+      where: {
+        signature_id: signature_id,
+      },
+      data: {
+        descriptions: descriptions,
+        signed_date: new Date(),
+        status: "SIGNED",
       },
     });
 

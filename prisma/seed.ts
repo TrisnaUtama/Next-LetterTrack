@@ -28,13 +28,30 @@ async function main() {
     });
     console.log("successfully seeding data letter type");
 
+    await prisma.deputy.create({
+      data: {
+        deputy_name: "Airport Facilities and Equipment Services",
+        head_deputy: "Boedi Coer Tjahjo Sadpotroe"
+      },
+    });
+    console.log("successfully seeding data deputy");
+    
+    await prisma.division.create({
+      data: {
+        division_name: "Airport Equipment",
+        head_division: "Eddy Samsul "
+      },
+    });
+    console.log("successfully seeding data division");
+    
     await prisma.department.create({
       data: {
-        department_name: "Information System",
-        department_head: "Nana",
+        department_name: "Electronics & Tech Services",
+        department_head: "Mahendra Tri Yuswanto"
       },
     });
     console.log("successfully seeding data department");
+    
 
     const employeeId = generateEmployeeId();
     const hashedPassword = await hashPassword("password");
@@ -50,7 +67,7 @@ async function main() {
         address: "streetofgods",
         birth: new Date(),
         employee_type_id: 1,
-        department_id: 1,
+        deputy_id: 1,
         phone_number: "88888888",
         createdAt: new Date(),
       },

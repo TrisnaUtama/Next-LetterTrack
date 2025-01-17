@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { ArrowDown } from "lucide-react";
+import { ArrowDown, Check, ChevronsUpDown } from "lucide-react";
 import Link from "next/link";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,20 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
+
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 import {
   Select,
@@ -44,6 +58,7 @@ import {
 import { Deputy, get_deputy } from "@/hooks/organizations/deputy_action";
 
 import { Division, get_division } from "@/hooks/organizations/division_action";
+import { cn } from "@/lib/utils";
 
 export default function EditLetter({ params }: { params: { id: string } }) {
   const [data, setData] = useState<LetterData>({
@@ -66,7 +81,12 @@ export default function EditLetter({ params }: { params: { id: string } }) {
   const [deputies, setDeputies] = useState<{ label: string; value: string }[]>(
     []
   );
+  const [mergedData, setMergedData] = useState<
+    { label: string; value: string }[]
+  >([]);
 
+  const [openSender, setOpenSender] = useState(false);
+  const [openRecepient, setOpenRecepient] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -75,6 +95,7 @@ export default function EditLetter({ params }: { params: { id: string } }) {
   useEffect(() => {
     const fetchDepartments = async () => {
       const res = await getDepartments();
+      let mergedData: { label: string; value: string }[] = [];
       if (res.status) {
         const transformedDepartments =
           res.data?.map((dept: Department) => ({
@@ -82,16 +103,21 @@ export default function EditLetter({ params }: { params: { id: string } }) {
             value: dept.department_id.toString(),
           })) || [];
         setDepartments(transformedDepartments);
+        mergedData = [...mergedData, ...transformedDepartments];
       } else {
         console.error("Failed to fetch departments:", res.message);
       }
+      setMergedData(mergedData);
     };
     fetchDepartments();
   }, []);
 
+  console.log(data);
+
   useEffect(() => {
     const fetchDeputies = async () => {
       const res = await get_deputy();
+      let mergedData: { label: string; value: string }[] = [];
       if (res.status) {
         const transformedDeputies =
           res.data?.map((deputy: Deputy) => ({
@@ -99,16 +125,20 @@ export default function EditLetter({ params }: { params: { id: string } }) {
             value: deputy.deputy_id.toString(),
           })) || [];
         setDeputies(transformedDeputies);
+        mergedData = [...mergedData, ...transformedDeputies];
       } else {
         console.error("Failed to fetch deputies:", res.message);
       }
+      setMergedData(mergedData);
     };
+
     fetchDeputies();
   }, []);
 
   useEffect(() => {
     const fetchDivisions = async () => {
       const res = await get_division();
+      let mergedData: { label: string; value: string }[] = [];
       if (res.status) {
         const transformedDivisions =
           res.data?.map((division: Division) => ({
@@ -116,9 +146,11 @@ export default function EditLetter({ params }: { params: { id: string } }) {
             value: division.division_id.toString(),
           })) || [];
         setDivisions(transformedDivisions);
+        mergedData = [...mergedData, ...transformedDivisions];
       } else {
         console.error("Failed to fetch divisions:", res.message);
       }
+      setMergedData(mergedData);
     };
     fetchDivisions();
   }, []);
@@ -271,8 +303,6 @@ export default function EditLetter({ params }: { params: { id: string } }) {
     }
   };
 
-  console.log(data);
-
   const mergedOrganization = [...deputies, ...divisions, ...departments];
 
   return (
@@ -321,34 +351,73 @@ export default function EditLetter({ params }: { params: { id: string } }) {
               )}
             </div>
             <div>
-              <Label htmlFor="sender">
+              <Label htmlFor="sender" className="block mb-2.5">
                 Sender <span className="text-red-500">*</span>
               </Label>
-              <Select
-                onValueChange={handleSelectChangeDepartmentSender}
-                value={data.sender}
-              >
-                <SelectTrigger
-                  className={`mt-[1px] h-10 border ${
-                    errors.sender ? "border-red-500" : "border-gray-300"
-                  } focus:border-blue-500 focus:outline-none`}
-                >
-                  <SelectValue placeholder="Select Sender of the Letter">
-                    {
-                      mergedOrganization.find(
-                        (dept) => dept.label === data.sender
-                      )?.label
-                    }
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {mergedOrganization.map((dept) => (
-                    <SelectItem key={dept.label} value={dept.label}>
-                      {dept.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={openSender} onOpenChange={setOpenSender}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={openSender}
+                    className="w-full h-10 justify-between"
+                  >
+                    {data.sender
+                      ? mergedOrganization.find(
+                          (org) => org.label === data.sender
+                        )?.label || "Reset"
+                      : "Select sender..."}
+                    <ChevronsUpDown className="opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0">
+                  <Command>
+                    <CommandInput placeholder="Search sender..." />
+                    <CommandList>
+                      <CommandEmpty>No sender found.</CommandEmpty>
+                      <CommandGroup>
+                        <CommandItem
+                          key="reset"
+                          value="reset"
+                          onSelect={() => {
+                            setData((prevData) => ({
+                              ...prevData,
+                              sender: "",
+                            }));
+                            setOpenSender(false);
+                          }}
+                        >
+                          Reset Selection
+                        </CommandItem>
+                        {mergedOrganization.map((organization) => (
+                          <CommandItem
+                            key={organization.value}
+                            value={organization.value}
+                            onSelect={() => {
+                              setData((prevData) => ({
+                                ...prevData,
+                                sender: organization.value,
+                              }));
+                              setOpenSender(false);
+                            }}
+                          >
+                            {organization.label}
+                            <Check
+                              className={cn(
+                                "ml-auto",
+                                data.sender === organization.value
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              )}
+                            />
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+
               {errors.sender && (
                 <p className="text-red-500 text-sm">{errors.sender}</p>
               )}
@@ -357,50 +426,70 @@ export default function EditLetter({ params }: { params: { id: string } }) {
               <Label htmlFor="recipient">
                 Recipient <span className="text-red-500">*</span>
               </Label>
-              <Input
-                type="text"
-                id="recipient"
-                placeholder="enter the letter recipient"
-                value={data.recipient}
-                onChange={handleInputChange}
-                className={`mb-1 h-10 p-3 font-medium border ${
-                  errors.recipient ? "border-red-500" : "border-gray-300"
-                } focus:border-blue-500 focus:outline-none`}
-              />
-              {errors.recipient && (
-                <p className="text-red-500 text-sm">{errors.recipient}</p>
-              )}
-            </div>
-          </div>
-          <div className="grid grid-cols-1 mt-4 space-x-10">
-            <div>
-              <Label htmlFor="letter_type">
-                Letter Type <span className="text-red-500">*</span>
-              </Label>
-              <Select
-                onValueChange={handleSelectChange}
-                value={data.letter_type_id.toString()}
-              >
-                <SelectTrigger
-                  className={`mt-[6px] h-10 border ${
-                    errors.letter_type ? "border-red-500" : "border-gray-300"
-                  } focus:border-blue-500 focus:outline-none`}
-                >
-                  <SelectValue placeholder="Select Letter Type">
-                    {Letter_Type[data.letter_type_id]}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(Letter_Type).map(([key, value]) => (
-                    <SelectItem key={key} value={key}>
-                      {value}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.letter_type && (
-                <p className="text-red-500 text-sm">{errors.letter_type}</p>
-              )}
+              <Popover open={openRecepient} onOpenChange={setOpenRecepient}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={openRecepient}
+                    className="w-full h-10 justify-between"
+                  >
+                    {data.recipient
+                      ? mergedOrganization.find(
+                          (organization) =>
+                            organization.label === data.recipient
+                        )?.label || "Reset"
+                      : "Select recipient..."}
+                    <ChevronsUpDown className="opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0">
+                  <Command>
+                    <CommandInput placeholder="Search recipient..." />
+                    <CommandList>
+                      <CommandEmpty>No recipient found.</CommandEmpty>
+                      <CommandGroup>
+                        <CommandItem
+                          key="reset"
+                          value="reset"
+                          onSelect={() => {
+                            setData((prevData) => ({
+                              ...prevData,
+                              recipient: "",
+                            }));
+                            setOpenRecepient(false);
+                          }}
+                        >
+                          Reset Selection
+                        </CommandItem>
+                        {mergedOrganization.map((organization) => (
+                          <CommandItem
+                            key={organization.label}
+                            value={organization.label}
+                            onSelect={() => {
+                              setData((prevData) => ({
+                                ...prevData,
+                                recipient: organization.label,
+                              }));
+                              setOpenRecepient(false);
+                            }}
+                          >
+                            {organization.label}
+                            <Check
+                              className={cn(
+                                "ml-auto",
+                                data.recipient === organization.label
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              )}
+                            />
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
           <div className="grid grid-cols-3 mt-4 space-x-10">
@@ -465,6 +554,37 @@ export default function EditLetter({ params }: { params: { id: string } }) {
               )}
               {errors.department_id && (
                 <p className="text-red-500 text-sm">{errors.department_id}</p>
+              )}
+            </div>
+          </div>
+          <div className="grid grid-cols-1 mt-4 space-x-10">
+            <div>
+              <Label htmlFor="letter_type">
+                Letter Type <span className="text-red-500">*</span>
+              </Label>
+              <Select
+                onValueChange={handleSelectChange}
+                value={data.letter_type_id.toString()}
+              >
+                <SelectTrigger
+                  className={`mt-[6px] h-10 border ${
+                    errors.letter_type ? "border-red-500" : "border-gray-300"
+                  } focus:border-blue-500 focus:outline-none`}
+                >
+                  <SelectValue placeholder="Select Letter Type">
+                    {Letter_Type[data.letter_type_id]}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(Letter_Type).map(([key, value]) => (
+                    <SelectItem key={key} value={key}>
+                      {value}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.letter_type && (
+                <p className="text-red-500 text-sm">{errors.letter_type}</p>
               )}
             </div>
           </div>

@@ -31,11 +31,13 @@ export default function SignLetterDialog({
     department_id: number | null;
     deputy_id: number | null;
     division_id: number | null;
+    next_receiver: number | null;
   }>({
     description: "",
     department_id: null,
     deputy_id: null,
     division_id: null,
+    next_receiver: null,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -59,6 +61,7 @@ export default function SignLetterDialog({
     fetchData();
   }, [letter_id]);
 
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -71,14 +74,17 @@ export default function SignLetterDialog({
 
   const handleCheckboxChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    category: "department" | "deputy" | "division"
+    category: "department" | "deputy" | "division",
+    signature_id: number
   ) => {
     const { value, checked } = e.target;
     const idValue = Number(value);
+    const next_receiver_id = signature_id;
 
     if (checked) {
       setData((prevData) => ({
         ...prevData,
+        next_receiver: next_receiver_id,
         [`${category}_id`]: idValue,
         department_id: category === "department" ? idValue : null,
         deputy_id: category === "deputy" ? idValue : null,
@@ -91,6 +97,7 @@ export default function SignLetterDialog({
       }));
     }
   };
+
 
   const validateForm = () => {
     const isNoNotArrive = !signature.some((sig) => sig.status === "NOT_ARRIVE");
@@ -124,7 +131,7 @@ export default function SignLetterDialog({
       data.department_id ?? null,
       data.deputy_id ?? null,
       data.division_id ?? null,
-      signature_id
+      signature_id,
     );
 
     if (updated.success) {
@@ -145,6 +152,10 @@ export default function SignLetterDialog({
     }
     setLoader(false);
   };
+
+  console.log(signature);
+  console.log(letter_id);
+
 
   return (
     <Modal>
@@ -170,14 +181,20 @@ export default function SignLetterDialog({
                   value.status === "ARRIVE";
                 return (
                   <div
-                    key={value.department.department_id}
+                    key={value.signature_id}
                     className="flex items-center space-x-3"
                   >
                     <input
                       type="checkbox"
                       id={`department-${value.department.department_id}`}
                       value={value.department.department_id}
-                      onChange={(e) => handleCheckboxChange(e, "department")}
+                      onChange={(e) =>
+                        handleCheckboxChange(
+                          e,
+                          "department",
+                          value.signature_id
+                        )
+                      }
                       checked={
                         data.department_id === value.department.department_id
                       }
@@ -215,7 +232,9 @@ export default function SignLetterDialog({
                       type="checkbox"
                       id={`deputy-${value.Deputy.deputy_id}`}
                       value={value.Deputy.deputy_id}
-                      onChange={(e) => handleCheckboxChange(e, "deputy")}
+                      onChange={(e) =>
+                        handleCheckboxChange(e, "deputy", value.signature_id)
+                      }
                       checked={data.deputy_id === value.Deputy.deputy_id}
                       disabled={isDisabled}
                       className="form-checkbox text-blue-500 h-5 w-5 transition duration-200 ease-in-out"
@@ -251,7 +270,9 @@ export default function SignLetterDialog({
                       type="checkbox"
                       id={`division-${value.Division.division_id}`}
                       value={value.Division.division_id}
-                      onChange={(e) => handleCheckboxChange(e, "division")}
+                      onChange={(e) =>
+                        handleCheckboxChange(e, "division", value.signature_id)
+                      }
                       checked={data.division_id === value.Division.division_id}
                       disabled={isDisabled}
                       className="form-checkbox text-blue-500 h-5 w-5 transition duration-200 ease-in-out"

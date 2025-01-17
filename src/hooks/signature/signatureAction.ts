@@ -95,7 +95,7 @@ export async function getSignature(letter_id: string) {
 
   try {
     const res = await fetch(
-      `${process.env.ROOT_URL}/api/letter/signature?letter_id=${letter_id}&deputy_id=${user}`,
+      `${process.env.ROOT_URL}/api/letter/signature?letter_id=${letter_id}`,
       {
         method: "GET",
         headers: {

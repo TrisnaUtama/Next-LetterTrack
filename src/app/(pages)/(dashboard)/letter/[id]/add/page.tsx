@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { ArrowDown } from "lucide-react";
+import { ArrowDown, Check, ChevronsUpDown } from "lucide-react";
 import Link from "next/link";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,20 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
+
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 import {
   Select,
@@ -40,6 +54,7 @@ import { Deputy, get_deputy } from "@/hooks/organizations/deputy_action";
 import { Division, get_division } from "@/hooks/organizations/division_action";
 
 import { LetterData, addLetter } from "@/hooks/letter/letterAction";
+import { cn } from "@/lib/utils";
 
 export default function AddLetter({ params }: { params: { id: number } }) {
   const [data, setData] = useState<LetterData>({
@@ -55,6 +70,8 @@ export default function AddLetter({ params }: { params: { id: number } }) {
     primary_organization_id: 0,
   });
 
+  const [searchTerm, setSearchTerm] = useState("");
+
   const [departments, setDepartments] = useState<
     { label: string; value: string }[]
   >([]);
@@ -67,14 +84,15 @@ export default function AddLetter({ params }: { params: { id: number } }) {
   const [mergedData, setMergedData] = useState<
     { label: string; value: string }[]
   >([]);
+  const [openSender, setOpenSender] = useState(false);
+  const [openRecepient, setOpenRecepient] = useState(false);
+  const [openOrganizatioin, setOpenOrganization] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [selectOrganization, setOrganization] = useState<string>("");
   const [selectOrganizationId, setOrganizationId] = useState<number>();
   const { toast } = useToast();
   const router = useRouter();
-
-  console.log(departments, deputies, divisions);
 
   useEffect(() => {
     const fetchOrganization = async () => {
@@ -165,6 +183,12 @@ export default function AddLetter({ params }: { params: { id: number } }) {
       sender: value,
     }));
   };
+  const handleSelectChangeDepartmentRecepient = (value: string) => {
+    setData((prevData) => ({
+      ...prevData,
+      recipient: value,
+    }));
+  };
 
   const handleDepartmentChange = (selected: string[]) => {
     setData((prevData) => ({
@@ -184,8 +208,6 @@ export default function AddLetter({ params }: { params: { id: number } }) {
       division_id: selected.map((id) => parseInt(id, 10)),
     }));
   };
-
-  console.log(data);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -294,47 +316,145 @@ export default function AddLetter({ params }: { params: { id: number } }) {
               )}
             </div>
             <div>
-              <Label htmlFor="sender">
+              <Label htmlFor="sender" className="block mb-2.5">
                 Sender <span className="text-red-500">*</span>
               </Label>
-              <Select onValueChange={handleSelectChangeDepartmentSender}>
-                <SelectTrigger
-                  className={`mt-[1px] h-10 border ${
-                    errors.sender ? "border-red-500" : "border-gray-300"
-                  } focus:border-blue-500 focus:outline-none`}
-                >
-                  <SelectValue placeholder="Select Sender of the Letter" />
-                </SelectTrigger>
-                <SelectContent>
-                  {mergedData.map((value) => (
-                    <SelectItem
-                      disabled={value.value === params.id.toString()}
-                      key={value.label}
-                      value={value.label}
-                    >
-                      {value.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={openSender} onOpenChange={setOpenSender}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={openSender}
+                    className="w-full h-10 justify-between"
+                  >
+                    {data.recipient
+                      ? mergedData.find(
+                          (organization) => organization.label === data.sender
+                        )?.label || "Reset"
+                      : "Select sender..."}
+                    <ChevronsUpDown className="opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0">
+                  <Command>
+                    <CommandInput placeholder="Search sender..." />
+                    <CommandList>
+                      <CommandEmpty>No sender found.</CommandEmpty>
+                      <CommandGroup>
+                        <CommandItem
+                          key="reset"
+                          value="reset"
+                          onSelect={() => {
+                            setData((prevData) => ({
+                              ...prevData,
+                              sender: "",
+                            }));
+                            setOpenSender(false);
+                          }}
+                        >
+                          Reset Selection
+                        </CommandItem>
+                        {mergedData.map((organization) => (
+                          <CommandItem
+                            key={organization.label}
+                            value={organization.label}
+                            onSelect={() => {
+                              setData((prevData) => ({
+                                ...prevData,
+                                sender: organization.label,
+                              }));
+                              setOpenSender(false);
+                            }}
+                          >
+                            {organization.label}
+                            <Check
+                              className={cn(
+                                "ml-auto",
+                                data.sender === organization.label
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              )}
+                            />
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
               {errors.sender && (
                 <p className="text-red-500 text-sm">{errors.sender}</p>
               )}
             </div>
             <div>
-              <Label htmlFor="recipient">
+              <Label htmlFor="recipient" className="block mb-2.5">
                 Recipient <span className="text-red-500">*</span>
               </Label>
-              <Input
-                type="text"
-                id="recipient"
-                placeholder="enter the letter recipient"
-                value={data.recipient}
-                onChange={handleInputChange}
-                className={`mb-1 h-10 p-3 font-medium border ${
-                  errors.recipient ? "border-red-500" : "border-gray-300"
-                } focus:border-blue-500 focus:outline-none`}
-              />
+              <Popover open={openRecepient} onOpenChange={setOpenRecepient}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={openRecepient}
+                    className="w-full h-10 justify-between"
+                  >
+                    {data.recipient
+                      ? mergedData.find(
+                          (organization) =>
+                            organization.label === data.recipient
+                        )?.label || "Reset"
+                      : "Select recipient..."}
+                    <ChevronsUpDown className="opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0">
+                  <Command>
+                    <CommandInput placeholder="Search recipient..." />
+                    <CommandList>
+                      <CommandEmpty>No recipient found.</CommandEmpty>
+                      <CommandGroup>
+                        <CommandItem
+                          key="reset"
+                          value="reset"
+                          onSelect={() => {
+                            setData((prevData) => ({
+                              ...prevData,
+                              recipient: "",
+                            }));
+                            setOpenRecepient(false);
+                          }}
+                        >
+                          Reset Selection
+                        </CommandItem>
+                        {mergedData.map((organization) => (
+                          <CommandItem
+                            key={organization.label}
+                            value={organization.label}
+                            onSelect={() => {
+                              setData((prevData) => ({
+                                ...prevData,
+                                recipient: organization.label,
+                              }));
+                              setOpenRecepient(false);
+                            }}
+                          >
+                            {organization.label}
+                            <Check
+                              className={cn(
+                                "ml-auto",
+                                data.recipient === organization.label
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              )}
+                            />
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+
               {errors.recipient && (
                 <p className="text-red-500 text-sm">{errors.recipient}</p>
               )}
@@ -352,7 +472,7 @@ export default function AddLetter({ params }: { params: { id: number } }) {
                 placeholder="Select Department"
                 variant="inverted"
                 animation={2}
-                maxCount={3}
+                maxCount={1}
               />
               {errors.department_id && (
                 <p className="text-red-500 text-sm">{errors.department_id}</p>
@@ -369,7 +489,7 @@ export default function AddLetter({ params }: { params: { id: number } }) {
                 placeholder="Select Division"
                 variant="inverted"
                 animation={2}
-                maxCount={3}
+                maxCount={1}
               />
               {errors.division_id && (
                 <p className="text-red-500 text-sm">{errors.division_id}</p>
@@ -386,7 +506,7 @@ export default function AddLetter({ params }: { params: { id: number } }) {
                 placeholder="Select Deputy"
                 variant="inverted"
                 animation={2}
-                maxCount={3}
+                maxCount={1}
               />
               {errors.deputy_id && (
                 <p className="text-red-500 text-sm">{errors.deputy_id}</p>
@@ -438,52 +558,84 @@ export default function AddLetter({ params }: { params: { id: number } }) {
             )}
             {selectOrganization && (
               <div>
-                <Label htmlFor={selectOrganization}>
+                <Label htmlFor={selectOrganization} className="block mt-2">
                   {selectOrganization} <span className="text-red-500">*</span>
                 </Label>
-                <Select
-                  value={selectOrganizationId?.toString()}
-                  onValueChange={(value) => handleOrganizationId(Number(value))}
+                <Popover
+                  open={openOrganizatioin}
+                  onOpenChange={setOpenOrganization}
                 >
-                  <SelectTrigger
-                    id={selectOrganization}
-                    className={`mt-[6px] h-10 border ${
-                      errors.department ? "border-red-500" : "border-gray-300"
-                    } focus:border-blue-500 focus:outline-none`}
-                  >
-                    <SelectValue
-                      placeholder={`selected ${selectOrganization}`}
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {selectOrganization === "Department"
-                      ? departments.map((value) => (
-                          <SelectItem
-                            key={value.label}
-                            value={value.value.toString()}
-                          >
-                            {value.label}
-                          </SelectItem>
-                        ))
-                      : selectOrganization === "Division"
-                      ? divisions.map((value) => (
-                          <SelectItem
-                            key={value.label}
-                            value={value.value.toString()}
-                          >
-                            {value.label}
-                          </SelectItem>
-                        ))
-                      : deputies.map((value) => (
-                          <SelectItem
-                            key={value.label}
-                            value={value.value.toString()}
-                          >
-                            {value.label}
-                          </SelectItem>
-                        ))}
-                  </SelectContent>
-                </Select>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={openOrganizatioin}
+                      className={` h-10 border w-full mt-2 flex justify-between ${
+                        errors.department ? "border-red-500" : "border-gray-300"
+                      } focus:border-blue-500 focus:outline-none`}
+                    >
+                      {selectOrganizationId
+                        ? departments.find(
+                            (org) =>
+                              org.value.toString() ===
+                              selectOrganizationId.toString()
+                          )?.label || "Select organization..."
+                        : `Select ${selectOrganization}`}
+                      <ChevronsUpDown className="opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0">
+                    <div className="p-2">
+                      <input
+                        type="text"
+                        placeholder={`Search ${selectOrganization}`}
+                        className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                    </div>
+                    <Command>
+                      <CommandList>
+                        <CommandEmpty>No organization found.</CommandEmpty>
+                        <CommandGroup>
+                          {(selectOrganization === "Department"
+                            ? departments
+                            : selectOrganization === "Division"
+                            ? divisions
+                            : deputies
+                          )
+                            .filter((value) =>
+                              value.label
+                                .toLowerCase()
+                                .includes(searchTerm.toLowerCase())
+                            )
+                            .map((value) => (
+                              <CommandItem
+                                key={value.value}
+                                value={value.value.toString()}
+                                onSelect={() => {
+                                  handleOrganizationId(Number(value.value));
+                                  setOpenOrganization(false);
+                                }}
+                              >
+                                {value.label}
+                                <Check
+                                  className={cn(
+                                    "ml-auto",
+                                    selectOrganizationId?.toString() ===
+                                      value.value.toString()
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  )}
+                                />
+                              </CommandItem>
+                            ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+
                 <div className="mt-4">
                   <Button
                     type="button"
